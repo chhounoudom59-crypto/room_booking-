@@ -4,6 +4,11 @@ from decouple import config
 # Optional PyMySQL shim: only install if the package is available.
 try:
     import pymysql
+    # Django's MySQL backend enforces a minimum mysqlclient version.
+    # When using PyMySQL via `install_as_MySQLdb()`, set a compatible
+    # version tuple so Django doesn't reject the driver.
+    pymysql.version_info = (2, 2, 1, "final", 0)
+    pymysql.__version__ = "2.2.1"
     pymysql.install_as_MySQLdb()
 except Exception:
     import warnings
@@ -93,21 +98,36 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'room_booking_system.wsgi.application'
 
-# MySQL database configuration (from .env)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('DB_NAME', default='room_booking'),
-        'USER': config('DB_USER', default='root'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
+# Database configuration - use SQLite for local development if no DB configured
+_db_name = config('DB_NAME', default='')
+_db_user = config('DB_USER', default='')
+_db_password = config('DB_PASSWORD', default='')
+_db_host = config('DB_HOST', default='')
+
+if not _db_name and not _db_user and not _db_password and not _db_host:
+    # Use SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # MySQL database configuration (from .env)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': config('DB_NAME', default='room_booking'),
+            'USER': config('DB_USER', default='root'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

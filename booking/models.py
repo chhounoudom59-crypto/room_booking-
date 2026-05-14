@@ -411,7 +411,7 @@ class Booking(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(start_time__lt=models.F('end_time')),
+                condition=models.Q(start_time__lt=models.F('end_time')),
                 name='start_time_before_end_time'
             )
         ]

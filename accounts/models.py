@@ -5,16 +5,31 @@ from django.db import models
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, student_id, phone_number, password=None, **extra_fields):
+    def _generate_student_id(self, prefix='USR'):
+        next_number = self.model.objects.count() + 1
+        while True:
+            candidate = f"{prefix}{next_number:06d}"
+            if not self.model.objects.filter(student_id=candidate).exists():
+                return candidate
+            next_number += 1
+
+    def create_user(self, email, student_id=None, phone_number='', password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
+        if student_id is not None:
+            student_id = str(student_id).strip()
+        if not student_id:
+            id_prefix = 'ADM' if extra_fields.get('is_superuser') else 'USR'
+            student_id = self._generate_student_id(prefix=id_prefix)
+        if phone_number is None:
+            phone_number = ''
         user = self.model(email=email, student_id=student_id, phone_number=phone_number, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, student_id, phone_number, password=None, **extra_fields):
+    def create_superuser(self, email, student_id=None, phone_number='', password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_admin', True)

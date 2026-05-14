@@ -110,7 +110,7 @@ class Migration(migrations.Migration):
                 'db_table': 'bookings',
                 'ordering': ['-start_time'],
                 'indexes': [models.Index(fields=['user', 'start_time'], name='bookings_user_id_96e935_idx'), models.Index(fields=['room', 'start_time'], name='bookings_room_id_f4fe20_idx'), models.Index(fields=['status'], name='bookings_status_51373b_idx'), models.Index(fields=['start_time', 'end_time'], name='bookings_start_t_b42a03_idx')],
-                'constraints': [models.CheckConstraint(check=models.Q(('start_time__lt', models.F('end_time'))), name='start_time_before_end_time')],
+                'constraints': [models.CheckConstraint(condition=models.Q(('start_time__lt', models.F('end_time'))), name='start_time_before_end_time')],
             },
         ),
     ]

@@ -279,18 +279,38 @@ def register(request):
 def custom_login_view(request):
     """Login view - Routes to appropriate dashboard based on account type"""
     if request.method == 'POST':
-        email = request.POST.get('username', '').strip()
+        email = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password', '')
         selected_role = request.POST.get('user_role', '').strip()
 
         print(f"Login attempt for: {email} as {selected_role}")
 
         user = authenticate(request, email=email, password=password)
+        if user is None:
+            candidate = User.objects.filter(email__iexact=email).first()
+            if candidate and candidate.is_active and candidate.check_password(password):
+                candidate.backend = 'django.contrib.auth.backends.ModelBackend'
+                user = candidate
+
         if user is not None:
-            # Check group membership
-            from django.contrib.auth.models import Group
-            is_admin = user.groups.filter(name='Admin').exists()
-            is_user = user.groups.filter(name='User').exists()
+            # Check role using both group membership and account flags
+            setup_user_groups()
+            admin_group, _ = Group.objects.get_or_create(name='Admin')
+            user_group, _ = Group.objects.get_or_create(name='User')
+
+            is_admin = (
+                user.groups.filter(name='Admin').exists()
+                or user.is_superuser
+                or user.is_staff
+                or getattr(user, 'is_admin', False)
+            )
+            is_user = user.groups.filter(name='User').exists() or not is_admin
+
+            # Auto-heal missing group assignments for consistency
+            if is_admin and not user.groups.filter(name='Admin').exists():
+                user.groups.add(admin_group)
+            elif is_user and not user.groups.filter(name='User').exists():
+                user.groups.add(user_group)
 
             # Validate role selection
             if selected_role == 'admin':

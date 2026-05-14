@@ -8,10 +8,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-            ALTER TABLE rooms DROP INDEX room_number;
+            DROP INDEX IF EXISTS room_number;
             """,
             reverse_sql="""
-            CREATE UNIQUE INDEX room_number ON rooms (room_number);
+            CREATE UNIQUE INDEX room_number ON booking_room (room_number);
             """
         ),
     ]

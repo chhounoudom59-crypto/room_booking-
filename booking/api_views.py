@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime, timedelta
@@ -593,3 +594,134 @@ def api_search_rooms(request):
             'success': False,
             'error': str(e)
         }, status=400)
+
+
+# ============================================
+# Admin Authentication Endpoint
+# ============================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_admin_verify(request):
+    """
+    Verify admin credentials via HTTP POST request.
+    Used by Streamlit application for admin authentication.
+    
+    POST /api/auth/admin-verify/
+    Body: {
+        "username": "admin@example.com",
+        "password": "password123"
+    }
+    
+    Response (Success - 200):
+    {
+        "success": true,
+        "message": "Authentication successful",
+        "user": {
+            "id": 1,
+            "email": "admin@example.com",
+            "first_name": "Admin",
+            "last_name": "User",
+            "is_staff": true,
+            "is_superuser": true
+        }
+    }
+    
+    Response (Failure - 401):
+    {
+        "success": false,
+        "message": "Invalid credentials"
+    }
+    
+    Response (Failure - 403):
+    {
+        "success": false,
+        "message": "User does not have admin privileges"
+    }
+    """
+    try:
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid JSON in request body'
+            }, status=400)
+        
+        # Get username and password
+        username = data.get('username', '').strip() if isinstance(data.get('username'), str) else ''
+        password = data.get('password', '') if isinstance(data.get('password'), str) else ''
+        
+        # Validate inputs
+        if not username or not password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Username and password are required'
+            }, status=400)
+        
+        # Authenticate user - try with provided username first
+        user = None
+        try:
+            user = authenticate(request, username=username, password=password)
+        except Exception as auth_error:
+            # If authenticate fails, try by email
+            try:
+                user_obj = User.objects.get(email=username)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = None
+            except Exception:
+                # If both fail, user is None
+                user = None
+        
+        # If authentication via username fails, try with email
+        if user is None:
+            try:
+                user_by_email = User.objects.get(email=username)
+                user = authenticate(request, username=user_by_email.username, password=password)
+            except User.DoesNotExist:
+                pass
+            except Exception:
+                pass
+        
+        # Check if user exists and authentication failed
+        if user is None:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid credentials'
+            }, status=401)
+        
+        # Check if user has admin privileges
+        if not user.is_staff:
+            return JsonResponse({
+                'success': False,
+                'message': 'User does not have admin privileges'
+            }, status=403)
+        
+        # Return user info
+        return JsonResponse({
+            'success': True,
+            'message': 'Authentication successful',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.isoformat(),
+            }
+        }, status=200)
+    
+    except Exception as e:
+        # Log detailed error for debugging
+        import traceback
+        error_trace = traceback.format_exc()
+        return JsonResponse({
+            'success': False,
+            'message': f'Server error: {str(e)}'
+        }, status=500)
+

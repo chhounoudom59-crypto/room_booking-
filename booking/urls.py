@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/bookings/create/', api_views.api_create_booking, name='api_create_booking'),
     path('api/bookings/cancel/', api_views.api_cancel_booking, name='api_cancel_booking'),
     path('api/rules/', api_views.api_get_booking_rules, name='api_get_booking_rules'),
+    path('api/auth/admin-verify/', api_views.api_admin_verify, name='api_admin_verify'),
     
     # Room management URLs
     path('rooms/', views.room_list, name='room_list'),

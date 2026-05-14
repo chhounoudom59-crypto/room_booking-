@@ -6,22 +6,16 @@ Management-level decision support dashboard built with Streamlit + Plotly.
 import os
 from datetime import datetime, timedelta, date
 
-import django
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Django setup
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "room_booking_system.settings")
-django.setup()
-
-from booking.models import Booking, Room  # noqa: E402
-
-User = get_user_model()
-
+from database import fetch_all_bookings, fetch_all_rooms
 
 BUSINESS_HOURS_PER_DAY = 10  # 08:00 - 18:00
 COLOR_SEQUENCE = ["#4C78A8", "#72B7B2", "#54A24B", "#E45756", "#F58518", "#B279A2"]
@@ -68,39 +62,36 @@ def _normalize_datetime_column(df: pd.DataFrame, col: str) -> pd.Series:
 
 @st.cache_data(ttl=300)
 def load_dataframes() -> tuple[pd.DataFrame, pd.DataFrame]:
-    booking_rows = list(
-        Booking.objects.select_related("room", "user").values(
-            "id",
-            "status",
-            "start_time",
-            "end_time",
-            "created_at",
-            "room_id",
-            "room__name",
-            "room__room_number",
-            "room__capacity",
-            "user_id",
-            "user__email",
-            "user__first_name",
-            "user__last_name",
-            "user__department",
-        )
-    )
-    room_rows = list(
-        Room.objects.values(
-            "id",
-            "name",
-            "room_number",
-            "capacity",
-            "is_available",
-            "availability_status",
-        )
-    )
+    # Use booking data retrieved from the database module
+    from database import fetch_all_bookings, fetch_all_rooms
+
+    booking_rows = fetch_all_bookings()
+    room_rows = fetch_all_rooms()
 
     df_bookings = pd.DataFrame(booking_rows)
     df_rooms = pd.DataFrame(room_rows)
 
     if not df_bookings.empty:
+        # Re-map columns from fetch_all_bookings to what the dashboard expects
+        if "user_name" in df_bookings.columns:
+            df_bookings["user__first_name"] = df_bookings["user_name"]
+            df_bookings["user__last_name"] = ""
+        if "user_email" in df_bookings.columns:
+            df_bookings["user__email"] = df_bookings["user_email"]
+        if "room_name" in df_bookings.columns:
+            df_bookings["room__name"] = df_bookings["room_name"]
+        if "room_number" in df_bookings.columns:
+            df_bookings["room__room_number"] = df_bookings["room_number"]
+            
+        # Extract fake IDs if not provided
+        df_bookings["user_id"] = df_bookings["user_email"]
+        # Try to map room_id from df_rooms
+        if not df_rooms.empty and "room_number" in df_rooms.columns and "room_number" in df_bookings.columns:
+            room_map = dict(zip(df_rooms["room_number"], df_rooms["id"]))
+            df_bookings["room_id"] = df_bookings["room_number"].map(room_map)
+        else:
+            df_bookings["room_id"] = 1
+
         df_bookings["start_time"] = _normalize_datetime_column(df_bookings, "start_time")
         df_bookings["end_time"] = _normalize_datetime_column(df_bookings, "end_time")
         df_bookings["created_at"] = _normalize_datetime_column(df_bookings, "created_at")
@@ -643,6 +634,10 @@ def section_operational_insights(df: pd.DataFrame, kpis: dict):
 
 
 def main():
+    if not st.session_state.get("authenticated", False):
+        st.warning("⚠️ Access Denied. Please log in first.")
+        st.stop()
+
     st.title("📊 Room Booking Analytics Dashboard")
 
     try:
