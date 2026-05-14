@@ -1,5 +1,7 @@
 import os
+
 import pymysql
+
 from .settings import *
 
 # Enable PyMySQL to work as MySQL driver

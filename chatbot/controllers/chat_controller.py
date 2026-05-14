@@ -1,10 +1,10 @@
 import logging
 import uuid
 
+from asgiref.sync import sync_to_async
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from asgiref.sync import sync_to_async
 
 from chatbot.integrations.ai_gateway import get_rag_system
 from chatbot.services.booking_service import (

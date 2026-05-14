@@ -7,6 +7,7 @@ Run via: python manage.py shell < ai/test_policy_rag.py
 
 import os
 import sys
+
 import django
 
 # Setup Django

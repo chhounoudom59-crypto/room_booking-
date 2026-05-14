@@ -1,16 +1,19 @@
 # booking/admin_views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import JsonResponse
-from django.core.paginator import Paginator
-from django.db.models import Q, Count
-from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Room, Booking, BookingRule, Announcement
-from .forms import RoomForm, BookingRuleForm, AnnouncementForm, AdminBookingForm
-from .decorators import admin_required
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+
 from accounts.models import User
+
+from .decorators import admin_required
+from .forms import AdminBookingForm, AnnouncementForm, BookingRuleForm, RoomForm
+from .models import Announcement, Booking, BookingRule, Room
 
 
 @login_required
@@ -533,7 +536,7 @@ def admin_user_management(request):
             except User.DoesNotExist:
                 messages.error(request, "User not found.")
             except Exception as e:
-                messages.error(request, f"An error occurred: {str(e)}")
+                messages.error(request, f"An error occurred: {e!s}")
 
         return redirect('booking:admin_user_management')
 

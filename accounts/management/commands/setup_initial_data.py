@@ -1,6 +1,6 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.core.management.base import BaseCommand
 
 User = get_user_model()
 
@@ -112,5 +112,5 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'❌ Error during setup: {str(e)}')
+                self.style.ERROR(f'❌ Error during setup: {e!s}')
             )

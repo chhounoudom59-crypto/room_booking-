@@ -64,6 +64,10 @@ Or use the provided helper on Windows:
 A `docker-compose.yml` is included for containerized setups:
 
 ```powershell
+Copy-Item .env.docker.example .env.docker
+```
+
+```powershell
 docker-compose up --build
 ```
 
@@ -100,7 +104,6 @@ git push origin main
 
 ### GitHub Actions Workflows
 - `.github/workflows/ci.yml` - Main CI pipeline for tests and linting
-- `.github/workflows/quality.yml` - Security and coverage checks
 - `.github/workflows/cd.yml` - Tag-driven Docker image build and push workflow
 
 **📚 For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**

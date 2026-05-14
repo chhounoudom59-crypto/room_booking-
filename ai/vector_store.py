@@ -1,6 +1,7 @@
-import os
 import logging
-from typing import List, Dict, Optional
+import os
+from typing import Dict, List, Optional
+
 try:
     import chromadb
     from chromadb.config import Settings

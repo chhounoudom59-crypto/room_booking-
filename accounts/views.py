@@ -1,27 +1,22 @@
 
-from django.db import models
-from django.conf import settings
 # Django core imports
-from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
-from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout, get_user_model, update_session_auth_hash
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.models import Group
-from django.contrib.auth.hashers import check_password
-from django.db.models import Q, Count
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from django.views.decorators.http import require_GET
-from django.views.decorators.csrf import csrf_exempt
-from django.urls import reverse
-from datetime import datetime, time
+import re
+from datetime import datetime
 
 # Python standard library
 from functools import wraps
-import re
 
+from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 # Third-party imports
 try:
@@ -31,8 +26,8 @@ except ImportError:
     openpyxl = None
 
 # Local imports
-from booking.models import Room, Booking, Announcement, RoomOccupiedTimeRule
 from accounts.forms import UserUpdateForm
+from booking.models import Announcement, Booking, Room, RoomOccupiedTimeRule
 
 # Get the custom User model
 User = get_user_model()
@@ -375,7 +370,7 @@ def register(request):
 
         except Exception as e:
             print(f"Registration error: {e}")
-            messages.error(request, f'Registration failed: {str(e)}')
+            messages.error(request, f'Registration failed: {e!s}')
             return render(request, 'SignIn-RegisterPage/register.html')
 
     return render(request, 'SignIn-RegisterPage/register.html')
@@ -401,7 +396,6 @@ def custom_login_view(request):
                 user = authenticate(request, email=email, password=password)
         if user is not None:
             # Check group membership
-            from django.contrib.auth.models import Group
             is_admin = user.groups.filter(name='Admin').exists()
             is_user = user.groups.filter(name='User').exists()
 
@@ -447,8 +441,9 @@ def user_dashboard_view(request):
     user_role = get_user_role(request.user)
 
     # Show all rooms (available and unavailable) in featureRoom.html
-    from booking.models import Room
     from django.utils import timezone
+
+    from booking.models import Room
 
     rooms = Room.objects.all().order_by('room_number')
     # Convert rooms to format expected by frontend
@@ -499,7 +494,7 @@ def booking_view(request):
     time_param = request.GET.get('time')
 
     # Import booking models
-    from booking.models import Room, Booking
+    from booking.models import Booking, Room
 
     # Show all rooms so users can see status, including unavailable rooms.
     rooms = Room.objects.all().order_by('room_number')
@@ -681,9 +676,11 @@ def create_booking(request):
 
     if request.method == 'POST':
         try:
-            from booking.models import Room, Booking
             from datetime import datetime
+
             from django.utils import timezone
+
+            from booking.models import Booking, Room
 
             # Get form data
             room_id = request.POST.get('room')
@@ -886,7 +883,7 @@ def create_booking(request):
             return redirect('accounts:booked')
 
         except Exception as e:
-            messages.error(request, f'Booking failed: {str(e)}')
+            messages.error(request, f'Booking failed: {e!s}')
             return redirect('accounts:booking')
 
     return redirect('accounts:booking')
@@ -982,7 +979,7 @@ def profile_setting_view(request):
                 except Exception as e:
                     return JsonResponse({
                         'success': False,
-                        'message': f'Save failed: {str(e)}',
+                        'message': f'Save failed: {e!s}',
                         'errors': {'__all__': [str(e)]}
                     })
             else:
@@ -1014,7 +1011,7 @@ def profile_setting_view(request):
                         messages.success(request, 'Profile updated successfully!')
                     return redirect('accounts:setting')
                 except Exception as e:
-                    messages.error(request, f'Failed to save profile: {str(e)}')
+                    messages.error(request, f'Failed to save profile: {e!s}')
             else:
                 # Show specific validation errors
                 for field, errors in form.errors.items():
@@ -1093,7 +1090,7 @@ def service_view(request):
                 messages.success(request, 'Your message has been sent to support. We will contact you soon!')
             except Exception as e:
                 print(f"[ERROR] Failed to send Telegram alert: {e}")
-                messages.error(request, f'Failed to send message: {str(e)}')
+                messages.error(request, f'Failed to send message: {e!s}')
 
     context = {
         'user': request.user,
@@ -1142,7 +1139,7 @@ def manage_rooms_view(request):
     # Handle room management
     if request.method == 'POST':
         try:
-            from booking.models import Room, RoomOccupiedTimeRule
+            from booking.models import Room
 
             action = request.POST.get('action')
 
@@ -1266,9 +1263,9 @@ def manage_rooms_view(request):
                         messages.error(request, 'Room not found.')
 
         except ValueError as e:
-            messages.error(request, f'Invalid input: {str(e)}')
+            messages.error(request, f'Invalid input: {e!s}')
         except Exception as e:
-            messages.error(request, f'Room management failed: {str(e)}')
+            messages.error(request, f'Room management failed: {e!s}')
 
     # Get rooms data
     from booking.models import Room
@@ -1473,9 +1470,9 @@ def admin_room_management_view(request):
                     messages.error(request, 'Occupied rule not found.')
 
         except ValueError as e:
-            messages.error(request, f'Invalid input: {str(e)}')
+            messages.error(request, f'Invalid input: {e!s}')
         except Exception as e:
-            messages.error(request, f'Room management failed: {str(e)}')
+            messages.error(request, f'Room management failed: {e!s}')
 
     # Get rooms data
     from booking.models import Room
@@ -1581,7 +1578,7 @@ def add_room_view(request):
                 messages.success(request, f'Room "{name}" added successfully!')
                 return redirect('accounts:manage_rooms')
             except Exception as e:
-                messages.error(request, f'Error adding room: {str(e)}')
+                messages.error(request, f'Error adding room: {e!s}')
 
     context = {
         'user': request.user,
@@ -1624,14 +1621,16 @@ def all_bookings_view(request):
         except Booking.DoesNotExist:
             messages.error(request, 'Booking not found.')
         except Exception as e:
-            messages.error(request, f'Booking action failed: {str(e)}')
+            messages.error(request, f'Booking action failed: {e!s}')
 
     # Get all bookings with filtering
-    from booking.models import Booking
-    from django.utils import timezone
     from datetime import datetime
+
     import openpyxl
+    from django.utils import timezone
     from openpyxl.utils import get_column_letter
+
+    from booking.models import Booking
 
     bookings = Booking.objects.all().order_by('-start_time')
 
@@ -1645,7 +1644,8 @@ def all_bookings_view(request):
     elif category == 'month':
         # Filter by the current month using a timezone-aware datetime range
         import calendar
-        from datetime import time, datetime
+        from datetime import datetime, time
+
         from django.utils import timezone
         first_day = today.replace(day=1)
         last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
@@ -1669,7 +1669,6 @@ def all_bookings_view(request):
     elif category == 'custom' and date_str:
         # Support both 'YYYY-MM-DD' and 'M/D/YYYY' formats
         from datetime import datetime
-        import logging
         custom_date = None
         try:
             custom_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -1679,8 +1678,9 @@ def all_bookings_view(request):
             except ValueError:
                 pass
         if custom_date:
-            from django.utils import timezone
             import datetime as dt
+
+            from django.utils import timezone
             # Get the start and end of the custom date in the local timezone
             start_dt = timezone.make_aware(dt.datetime.combine(custom_date, dt.time.min))
             end_dt = timezone.make_aware(dt.datetime.combine(custom_date, dt.time.max))
@@ -1823,7 +1823,7 @@ def admin_setting_view(request):
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'message': f'Update failed: {str(e)}'
+                'message': f'Update failed: {e!s}'
             }, status=500)
         else:
             # Handle regular form submission
@@ -1833,7 +1833,7 @@ def admin_setting_view(request):
                     messages.success(request, 'Profile updated successfully!')
                     return redirect('accounts:admin_setting')
                 except Exception as e:
-                    messages.error(request, f'Profile update failed: {str(e)}')
+                    messages.error(request, f'Profile update failed: {e!s}')
             else:
                 for field, errors in form.errors.items():
                     for error in errors:
@@ -1903,7 +1903,7 @@ def manage_users_view(request):
         except User.DoesNotExist:
             messages.error(request, 'User not found.')
         except Exception as e:
-            messages.error(request, f'User management failed: {str(e)}')
+            messages.error(request, f'User management failed: {e!s}')
 
         return redirect('accounts:manage_users')
 
@@ -1923,7 +1923,7 @@ def manage_users_view(request):
         pending_approval_count = pending_approval_users.count()
 
     except Exception as e:
-        messages.error(request, f'Error loading users: {str(e)}')
+        messages.error(request, f'Error loading users: {e!s}')
         all_users = []
         admin_users = []
         regular_users = []
@@ -2055,7 +2055,7 @@ def admin_room_detail_view(request, room_id):
         messages.error(request, 'Room not found.')
         return redirect('accounts:manage_rooms')
     except Exception as e:
-        messages.error(request, f'Error loading room details: {str(e)}')
+        messages.error(request, f'Error loading room details: {e!s}')
         return redirect('accounts:manage_rooms')
 
 @login_required
@@ -2138,7 +2138,7 @@ def admin_add_room_view(request):
         return render(request, 'AdminPage/admin_room_form.html', context)
 
     except Exception as e:
-        messages.error(request, f'Error adding room: {str(e)}')
+        messages.error(request, f'Error adding room: {e!s}')
         return redirect('accounts:manage_rooms')
 
 @login_required
@@ -2234,7 +2234,7 @@ def admin_edit_room_view(request, room_id):
         messages.error(request, 'Room not found.')
         return redirect('accounts:manage_rooms')
     except Exception as e:
-        messages.error(request, f'Error editing room: {str(e)}')
+        messages.error(request, f'Error editing room: {e!s}')
         return redirect('accounts:manage_rooms')
 
 @login_required
@@ -2244,7 +2244,7 @@ def admin_delete_room_view(request, room_id):
     user_role = get_user_role(request.user)
 
     try:
-        from booking.models import Room, Booking
+        from booking.models import Booking, Room
         room = Room.objects.get(id=room_id)
 
         if request.method == 'POST':
@@ -2290,7 +2290,7 @@ def admin_delete_room_view(request, room_id):
         messages.error(request, 'Room not found.')
         return redirect('accounts:manage_rooms')
     except Exception as e:
-        messages.error(request, f'Error deleting room: {str(e)}')
+        messages.error(request, f'Error deleting room: {e!s}')
         return redirect('accounts:manage_rooms')
 
 # ============================================================================
@@ -2352,10 +2352,10 @@ def ajax_toggle_user_status(request, user_id):
             if request.headers.get('Content-Type') == 'application/json':
                 return JsonResponse({
                     'success': False,
-                    'error': f'An error occurred: {str(e)}'
+                    'error': f'An error occurred: {e!s}'
                 })
             else:
-                messages.error(request, f'An error occurred: {str(e)}')
+                messages.error(request, f'An error occurred: {e!s}')
                 return redirect('accounts:manage_users')
 
     return JsonResponse({
@@ -2405,7 +2405,7 @@ def ajax_delete_room(request, room_id):
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'error': f'An error occurred: {str(e)}'
+                'error': f'An error occurred: {e!s}'
             })
 
     return JsonResponse({
@@ -2452,7 +2452,7 @@ def ajax_toggle_room_availability(request, room_id):
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'error': f'An error occurred: {str(e)}'
+                'error': f'An error occurred: {e!s}'
             })
 
     return JsonResponse({
@@ -2611,7 +2611,7 @@ def ajax_bulk_action(request):
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'error': f'An error occurred: {str(e)}'
+                'error': f'An error occurred: {e!s}'
             })
 
     return JsonResponse({
@@ -2702,8 +2702,9 @@ def user_profile_view(request):
 def booking_detail_view(request, booking_id):
     """View booking details"""
     try:
-        from booking.models import Booking
         from datetime import timedelta
+
+        from booking.models import Booking
 
         booking = Booking.objects.get(id=booking_id, user=request.user)
 
@@ -2744,7 +2745,7 @@ def booking_detail_view(request, booking_id):
         messages.error(request, 'Booking not found.')
         return redirect('accounts:booked')
     except Exception as e:
-        messages.error(request, f'Error viewing booking details: {str(e)}')
+        messages.error(request, f'Error viewing booking details: {e!s}')
         return redirect('accounts:booked')
 
 
@@ -2753,8 +2754,9 @@ def check_availability_ajax(request):
     """AJAX endpoint to check room availability"""
     if request.method == 'POST':
         try:
-            from booking.models import Room, Booking
             import json
+
+            from booking.models import Booking, Room
 
             data = json.loads(request.body)
             room_id = data.get('room_id')
@@ -2972,8 +2974,9 @@ def cancel_booking_view(request, booking_id):
     user_role = get_user_role(request.user)
 
     try:
-        from booking.models import Booking
         from datetime import timedelta
+
+        from booking.models import Booking
 
         booking = Booking.objects.get(id=booking_id, user=request.user)
 
@@ -3081,10 +3084,10 @@ def cancel_booking_view(request, booking_id):
         messages.error(request, 'Booking not found.')
         return redirect('accounts:booked')
     except Exception as e:
-        messages.error(request, f'Error processing cancellation: {str(e)}')
+        messages.error(request, f'Error processing cancellation: {e!s}')
         return redirect('accounts:booked')
     except Exception as e:
-        messages.error(request, f'Error cancelling booking: {str(e)}')
+        messages.error(request, f'Error cancelling booking: {e!s}')
         return redirect('accounts:booked')
 
 @login_required
@@ -3141,7 +3144,7 @@ def admin_booking_detail_view(request, booking_id):
         messages.error(request, 'Booking not found.')
         return redirect('accounts:all_bookings')
     except Exception as e:
-        messages.error(request, f'Error viewing booking: {str(e)}')
+        messages.error(request, f'Error viewing booking: {e!s}')
         return redirect('accounts:all_bookings')
 
 
@@ -3187,7 +3190,7 @@ def deactivate_user_view(request):
         except User.DoesNotExist:
             messages.error(request, 'User not found.')
         except Exception as e:
-            messages.error(request, f'Error: {str(e)}')
+            messages.error(request, f'Error: {e!s}')
 
         return redirect('accounts:deactivate_user')
 

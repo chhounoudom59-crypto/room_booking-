@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
@@ -10,17 +8,14 @@ services:
       MYSQL_USER: rith
       MYSQL_PASSWORD: rith1234
       MYSQL_ROOT_PASSWORD: rootpassword
-    ports:
-      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./room_booking_backup.sql:/docker-entrypoint-initdb.d/room_booking_backup.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "rith", "-prith1234"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 60s
 
   web:
     build: .

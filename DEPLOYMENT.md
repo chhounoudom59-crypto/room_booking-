@@ -36,14 +36,26 @@ If you use the Render-specific settings, also provide:
 
 ## Docker Deployment
 
-1. Create a `.env.docker` file with the values above.
-2. Start the stack:
+1. Create a `.env.docker` file from the tracked template:
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+```
+
+2. Review `.env.docker` values (`SECRET_KEY`, `ALLOWED_HOSTS`, database settings).
+3. Start the stack:
 
 ```bash
 docker-compose up --build
 ```
 
-3. Open the app at `http://localhost:8000`.
+4. Open the app at `http://localhost:8000`.
 
 The container entrypoint will:
 
@@ -111,6 +123,15 @@ If you want a simpler Render deployment, switch the app to SQLite for the web se
 - `ruff check .`
 - `docker-compose up --build`
 - GitHub Actions Docker Hub secrets configured for the release pipeline
+
+## Workflow Inventory (Current)
+
+Current workflow files in this repository:
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/cd.yml`
+
+If you plan to split quality/security checks into a dedicated workflow, add a new `quality.yml` file and keep this list updated.
 
 ## Common Failures
 

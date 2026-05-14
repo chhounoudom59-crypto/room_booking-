@@ -1,12 +1,12 @@
 import logging
-from typing import Dict, List, Optional
 from datetime import datetime
-import json
+from typing import Dict, List
+
+from ai.hybrid_retriever import HybridRetriever, MultiQueryRetriever
 
 # Import all advanced RAG components
 from ai.query_processor import QueryProcessor
-from ai.hybrid_retriever import HybridRetriever, MultiQueryRetriever
-from ai.reranker import HybridReRanker, DocumentReRanker
+from ai.reranker import HybridReRanker
 from ai.self_rag import SelfRAG
 from ai.vector_store import VectorStore
 

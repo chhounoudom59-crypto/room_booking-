@@ -35,6 +35,8 @@ local_settings.py
 # Env variants
 .env.local
 .env.*
+!.env.example
+!.env.docker.example
 
 # IDEs
 .idea/

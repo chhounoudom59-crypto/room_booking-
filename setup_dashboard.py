@@ -3,9 +3,10 @@ Quick Setup Guide for Analytics Dashboard
 Run this script to install dependencies and test the dashboard
 """
 
+import os
 import subprocess
 import sys
-import os
+
 
 def install_requirements():
     """Install required packages for the dashboard"""
@@ -43,7 +44,7 @@ def check_django_setup():
         import django
         django.setup()
 
-        from booking.models import Room, Booking
+        from booking.models import Booking, Room
 
         room_count = Room.objects.count()
         booking_count = Booking.objects.count()

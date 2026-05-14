@@ -4,18 +4,18 @@ REST API views for AI chatbot integration
 These endpoints allow the Semantic Kernel AI agent to interact with the booking system
 """
 
+import json
+from datetime import datetime, timedelta
+
+from django.db.models import Q
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from django.db.models import Q
-from datetime import datetime, timedelta
-import json
 
-from .models import Room, Booking, BookingRule
 from accounts.models import User
 
+from .models import Booking, BookingRule, Room
 
 # University booking policy scope (must match web flow enforcement)
 BOOKING_MIN_DURATION_HOURS = 1

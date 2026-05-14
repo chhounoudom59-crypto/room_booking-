@@ -4,23 +4,18 @@ target-version = "py311"
 line-length = 120
 
 [lint]
-# Core rules: Error, Warning, Pyflakes, and Imports
-select = ["E", "F", "W", "I"]
+# Enable standard rules
+select = ["E", "F", "W", "I", "N", "S", "B", "A", "C4", "T20", "RET", "SIM", "PLC", "PLE", "PLW", "RUF"]
 ignore = [
-    "E501", # Line length (handled by formatter)
-    "I001", # Unsorted imports (minor quality)
-    "E402", # Module level import not at top (needed for Django settings/environ setup)
-    "F401", # Unused imports
+    "E501", # Line too long (handled by formatter)
+    "S101", # Use of `assert` is fine in tests
+    "RET505", # Unnecessary `elif` after `return`
 ]
 
 [lint.per-file-ignores]
-"**/tests/*" = ["S101"]
-"**/tests.py" = ["S101"]
-"setup_dashboard.py" = ["T201"]
-# Allow print in other tools
-"dashboard_analytics.py" = ["T201"]
-"debug.py" = ["T201"]
-"debug2.py" = ["T201"]
+"**/tests/*" = ["S101", "F401"]
+"**/tests.py" = ["S101", "F401"]
+"manage.py" = ["PLR0913"]
 
 [lint.mccabe]
 max-complexity = 15
@@ -33,6 +28,7 @@ line-ending = "auto"
 
 exclude = [
     ".git",
+    ".venv",
     "venv",
     "__pycache__",
     "build",

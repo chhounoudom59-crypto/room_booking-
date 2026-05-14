@@ -11,4 +11,5 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'room_booking_system.settings_pythonanywh
 
 # Import Django's WSGI application
 from django.core.wsgi import get_wsgi_application
+
 application = get_wsgi_application()

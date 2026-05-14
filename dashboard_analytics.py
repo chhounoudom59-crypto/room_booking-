@@ -2,22 +2,22 @@
 Room Booking Analytics Dashboard
 Built with Streamlit for real-time analytics visualization
 """
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-from django.db.models import Count, Q
-from django.utils import timezone
 import os
+from datetime import datetime, timedelta
+
 import django
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
+from django.utils import timezone
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'room_booking_system.settings')
 django.setup()
 
-from booking.models import Booking, Room
 from django.contrib.auth import get_user_model
+
+from booking.models import Booking, Room
 
 User = get_user_model()
 

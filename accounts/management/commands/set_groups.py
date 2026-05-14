@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+
 class Command(BaseCommand):
     help = 'Set up user groups and permissions'
 

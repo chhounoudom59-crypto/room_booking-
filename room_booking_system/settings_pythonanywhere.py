@@ -1,5 +1,5 @@
-import os
 import pymysql
+
 from .settings import *
 
 # Enable PyMySQL

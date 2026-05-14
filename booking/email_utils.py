@@ -1,9 +1,10 @@
 # booking/email_utils.py
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils import timezone
-from datetime import timedelta
 import logging
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ If you have any questions, please contact our support team.
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send booking confirmation email: {str(e)}")
+        logger.error(f"Failed to send booking confirmation email: {e!s}")
         return False
 
 def send_booking_cancellation_email(booking):
@@ -89,7 +90,7 @@ If you have any questions, please contact our support team.
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send booking cancellation email: {str(e)}")
+        logger.error(f"Failed to send booking cancellation email: {e!s}")
         return False
 
 def send_booking_reminder_email(booking):
@@ -134,7 +135,7 @@ This is an automated email. Please do not reply to this email.
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send booking reminder email: {str(e)}")
+        logger.error(f"Failed to send booking reminder email: {e!s}")
         return False
 
 def send_admin_notification_email(booking, action):
@@ -176,7 +177,7 @@ Room Booking System - Admin Notification
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send admin notification email: {str(e)}")
+        logger.error(f"Failed to send admin notification email: {e!s}")
         return False
 
 def send_booking_reminder_batch():
@@ -237,5 +238,5 @@ This is an automated email. Please do not reply to this email.
         return False
 
     except Exception as e:
-        logger.error(f"Failed to send announcement email: {str(e)}")
+        logger.error(f"Failed to send announcement email: {e!s}")
         return False

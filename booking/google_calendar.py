@@ -1,9 +1,9 @@
-import logging
-from datetime import datetime, timedelta
-from django.conf import settings
-from allauth.socialaccount.models import SocialToken
-import requests
 import json
+import logging
+from datetime import datetime
+
+import requests
+from allauth.socialaccount.models import SocialToken
 
 logger = logging.getLogger(__name__)
 
@@ -58,14 +58,14 @@ class GoogleCalendarIntegration:
         try:
             if not social_token.token_secret:  # refresh_token
                 logger.warning(f"No refresh token available for user {self.user.email}")
-                return None
+                return
 
             logger.info(f"Token refresh needed for user {self.user.email}")
-            return None
+            return
 
         except Exception as e:
             logger.error(f"Error refreshing token for {self.user.email}: {e}")
-            return None
+            return
 
     def create_calendar_event(self, booking):
         """Create a calendar event for a room booking"""

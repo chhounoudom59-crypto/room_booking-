@@ -1,0 +1,125 @@
+<mxfile host="app.diagrams.net" agent="Antigravity">
+  <diagram name="CI/CD Pipeline" id="cicd-intelligent-room-booking">
+    <mxGraphModel dx="2630" dy="570" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;strokeWidth=2;arcSize=4;" value="" vertex="1">
+          <mxGeometry height="980" width="1840" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=22;fontStyle=1;fontColor=#0f172a;" value="CI/CD Pipeline — Intelligent Room Booking System" vertex="1">
+          <mxGeometry height="44" width="1840" x="30" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ci_lane_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#86efac;strokeWidth=2;arcSize=4;dashed=0;" value="" vertex="1">
+          <mxGeometry height="560" width="1140" x="50" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ci_lane_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#16a34a;rotation=-90;" value="CONTINUOUS INTEGRATION" vertex="1">
+          <mxGeometry height="200" width="30" x="50" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="cd_lane_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#c084fc;strokeWidth=2;arcSize=4;dashed=0;" value="" vertex="1">
+          <mxGeometry height="560" width="640" x="1210" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="cd_lane_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#9333ea;rotation=-90;" value="CONTINUOUS DEPLOYMENT" vertex="1">
+          <mxGeometry height="200" width="30" x="1210" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dev" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;strokeWidth=2;fontSize=12;fontStyle=0;arcSize=20;shadow=1;" value="&lt;br&gt;&lt;b&gt;Developer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;Writes &amp;amp; commits code&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="90" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="github" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#475569;strokeWidth=2;fontSize=12;fontStyle=0;arcSize=20;shadow=1;" value="&lt;br&gt;&lt;b&gt;GitHub Repository&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;Source code &amp;amp; Actions&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="320" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="dev" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#3b82f6;strokeWidth=2.5;fillColor=#3b82f6;endArrow=block;endFill=1;" target="github" value="&lt;font style=&#39;font-size:10px;font-style:italic&#39;&gt;git push&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="github" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#475569;strokeWidth=2.5;fillColor=#475569;endArrow=block;endFill=1;" target="ci_box" value="&lt;font style=&#39;font-size:10px;font-style:italic&#39;&gt;triggers workflow&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ci_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;strokeWidth=2;fontSize=11;align=center;arcSize=8;shadow=1;spacingTop=6;spacingBottom=6;" value="&lt;b style=&quot;font-size:13px&quot;&gt;&amp;nbsp;CI Pipeline&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;GitHub Actions — ci.yml&amp;nbsp;&lt;/font&gt;&lt;font style=&quot;font-size:11px&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;checkout&amp;nbsp;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;setup env&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;install depen&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;font-size: 10px; color: rgb(71, 85, 105);&quot;&gt;run test&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="300" width="240" x="560" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="ci_box" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#16a34a;strokeWidth=2.5;endArrow=block;endFill=1;" target="decision" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="decision" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef9c3;strokeColor=#ca8a04;strokeWidth=2;fontSize=13;fontStyle=1;shadow=1;" value="&lt;b&gt;Tests&lt;br/&gt;Pass?&lt;/b&gt;" vertex="1">
+          <mxGeometry height="110" width="130" x="880" y="228" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="decision" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#16a34a;strokeWidth=2.5;fontStyle=1;fontSize=11;endArrow=block;endFill=1;" target="cd_box" value="&lt;b style=&#39;color:#16a34a&#39;&gt;✅  YES&lt;/b&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="decision" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#dc2626;strokeWidth=2.5;fontStyle=1;fontSize=11;endArrow=block;endFill=1;" target="fail" value="&lt;b style=&#39;color:#dc2626&#39;&gt;❌  NO&lt;/b&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fail" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#dc2626;strokeWidth=2;fontSize=11;arcSize=15;shadow=1;" value="&lt;b style=&quot;font-size:13px&quot;&gt;&amp;nbsp;Build Failed&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(127, 29, 29);&quot;&gt;Pipeline stopped.&lt;br&gt;Developer notified via email.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="170" x="860" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="cd_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;strokeWidth=2;fontSize=11;align=center;arcSize=8;shadow=1;spacingTop=6;spacingBottom=6;" value="&lt;b style=&quot;font-size:13px&quot;&gt;CD Pipeline&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(107, 33, 168);&quot;&gt;GitHub Actions — cd.yml (tag-driven)&lt;/font&gt;&lt;div&gt;&lt;hr style=&quot;border-color: rgb(192, 132, 252);&quot;&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(153, 153, 255));&quot;&gt;build docker&amp;nbsp;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(204, 153, 255));&quot;&gt;tag&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(204, 153, 255));&quot;&gt;login hub&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(204, 153, 255));&quot;&gt;push image hub&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="280" width="240" x="1250" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="cd_box" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#9333ea;strokeWidth=2.5;endArrow=block;endFill=1;" target="dockerhub" value="&lt;font style=&#39;font-size:10px;font-style:italic&#39;&gt;docker push&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dockerhub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;strokeWidth=2;fontSize=12;arcSize=20;shadow=1;" value="&lt;b style=&quot;font-size:14px&quot;&gt;Docker Hub&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(30, 58, 95);&quot;&gt;intelligent_room_booking&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 10px; color: rgb(30, 58, 95);&quot;&gt;stores docker im online&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="240" x="1250" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="dockerhub" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=1;entryX=0.5;entryY=0;strokeColor=#2563eb;strokeWidth=2;endArrow=block;endFill=1;fontSize=9;" target="env_dev" value="&lt;font style=&#39;font-size:9px;font-style:italic&#39;&gt;:dev-v* / :master&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1270" y="660" />
+              <mxPoint x="1090" y="660" />
+              <mxPoint x="1090" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="dockerhub" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#d97706;strokeWidth=2;endArrow=block;endFill=1;fontSize=9;" target="env_stg" value="&lt;font style=&#39;font-size:9px;font-style:italic&#39;&gt;:stg-v* / :testing&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="dockerhub" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=1;entryX=0.5;entryY=0;strokeColor=#dc2626;strokeWidth=2;endArrow=block;endFill=1;fontSize=9;" target="env_prod" value="&lt;font style=&#39;font-size:9px;font-style:italic&#39;&gt;:prod-v* / :production&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.0846" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1490" y="660" />
+              <mxPoint x="1650" y="660" />
+              <mxPoint x="1650" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="env_dev" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;strokeWidth=2;fontSize=11;arcSize=12;shadow=1;" value="&lt;b style=&#39;font-size:13px&#39;&gt;🟦 Development&lt;/b&gt;&lt;hr/&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Tag: &lt;b&gt;dev-v*&lt;/b&gt;&lt;br/&gt;Branch: &lt;b&gt;dev&lt;/b&gt;&lt;br/&gt;Image: &lt;b&gt;:master&lt;/b&gt;&lt;br/&gt;Purpose: Feature testing&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="170" x="970" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="env_stg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=2;fontSize=11;arcSize=12;shadow=1;" value="&lt;b style=&#39;font-size:13px&#39;&gt;🟧 Staging&lt;/b&gt;&lt;hr/&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Tag: &lt;b&gt;stg-v*&lt;/b&gt;&lt;br/&gt;Branch: &lt;b&gt;staging&lt;/b&gt;&lt;br/&gt;Image: &lt;b&gt;:testing&lt;/b&gt;&lt;br/&gt;Purpose: QA validation&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="170" x="1280" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="env_prod" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#dc2626;strokeWidth=2;fontSize=11;arcSize=12;shadow=1;" value="&lt;b style=&#39;font-size:13px&#39;&gt;🟥 Production&lt;/b&gt;&lt;hr/&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Tag: &lt;b&gt;prod-v*&lt;/b&gt;&lt;br/&gt;Branch: &lt;b&gt;main&lt;/b&gt;&lt;br/&gt;Image: &lt;b&gt;:production&lt;/b&gt;&lt;br/&gt;Purpose: Live application&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="170" x="1560" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#374151;" value="&lt;b&gt;Workflow Files&lt;/b&gt;" vertex="1">
+          <mxGeometry height="24" width="130" x="90" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_ci" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#16a34a;fillColor=#dcfce7;align=center;fontSize=10;fontStyle=2;fontColor=#16a34a;" value="📄 ci.yml" vertex="1">
+          <mxGeometry height="28" width="110" x="90" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="leg_cd" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#9333ea;fillColor=#f3e8ff;align=center;fontSize=10;fontStyle=2;fontColor=#7e22ce;" value="📄 cd.yml" vertex="1">
+          <mxGeometry height="28" width="110" x="220" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="step1_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;fontColor=#64748b;" value="STEP 1" vertex="1">
+          <mxGeometry height="16" width="160" x="90" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="step2_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;fontColor=#64748b;" value="STEP 2" vertex="1">
+          <mxGeometry height="16" width="160" x="320" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="step3_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;fontColor=#64748b;" value="STEP 3" vertex="1">
+          <mxGeometry height="16" width="240" x="560" y="112" as="geometry" />
+        </mxCell>
+        <mxCell id="step4_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;fontColor=#64748b;" value="STEP 4" vertex="1">
+          <mxGeometry height="16" width="130" x="880" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="step5_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;fontColor=#64748b;" value="STEP 5" vertex="1">
+          <mxGeometry height="16" width="240" x="1250" y="128" as="geometry" />
+        </mxCell>
+        <mxCell id="step6_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;fontColor=#64748b;" value="STEP 6" vertex="1">
+          <mxGeometry height="16" width="240" x="1220" y="500" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

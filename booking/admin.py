@@ -2,7 +2,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import Room, Booking, BookingRule, Announcement, RoomOccupiedTimeRule
+
+from .models import Announcement, Booking, BookingRule, Room, RoomOccupiedTimeRule
 
 
 class RoomOccupiedTimeRuleInline(admin.TabularInline):

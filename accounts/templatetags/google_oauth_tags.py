@@ -1,11 +1,10 @@
 """
 Custom template tags for handling Google OAuth integration safely.
 """
-from django import template
 from allauth.socialaccount.models import SocialApp
-from allauth.socialaccount.templatetags.socialaccount import provider_login_url
 from allauth.socialaccount.providers.google.provider import GoogleProvider
-from django.urls import reverse
+from allauth.socialaccount.templatetags.socialaccount import provider_login_url
+from django import template
 
 register = template.Library()
 

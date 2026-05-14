@@ -15,11 +15,11 @@ def create_chat_agent():
 
     # --- Heavy imports moved here (important) ---
     from django.conf import settings
-    from booking.models import Room, Booking, BookingRule
 
-    from ai.kernel_config import create_kernel_ollama
     from ai.booking_automation import BookingAutomation
+    from ai.kernel_config import create_kernel_ollama
     from ai.plugins.room_booking_plugin import RoomBookingPlugin
+    from booking.models import Booking, BookingRule, Room
 
     # --- Init AI components ---
     booking_automation = BookingAutomation(Room, Booking, BookingRule)
@@ -31,7 +31,7 @@ def create_chat_agent():
     kernel.add_plugin(room_plugin, plugin_name="RoomBooking")
 
     # --- Import your ChatAgent class safely ---
-    from chatbot.agent import ChatAgent   # (we will extract it next step)
+    from chatbot.agent import ChatAgent  # (we will extract it next step)
 
     agent = ChatAgent(kernel, booking_automation, room_plugin)
 

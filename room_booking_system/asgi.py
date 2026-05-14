@@ -24,9 +24,9 @@ the WSGI application with WhiteNoise and then convert it to ASGI using
 solution during development when running with uvicorn.
 """
 try:
+	from asgiref.wsgi import WsgiToAsgi
 	from django.conf import settings
 	from django.core.wsgi import get_wsgi_application
-	from asgiref.wsgi import WsgiToAsgi
 	from whitenoise import WhiteNoise
 
 	# Build WSGI app and wrap with WhiteNoise

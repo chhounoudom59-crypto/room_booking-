@@ -1,6 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from PIL import Image, UnidentifiedImageError
 
 User = get_user_model()
@@ -382,6 +382,6 @@ class UserUpdateForm(forms.ModelForm):
                 user.save()
                 logger.info(f"Successfully saved user: {user.email}")
             except Exception as e:
-                logger.error(f"Failed to save user {user.email}: {str(e)}")
+                logger.error(f"Failed to save user {user.email}: {e!s}")
                 raise
         return user

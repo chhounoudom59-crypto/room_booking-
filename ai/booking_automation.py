@@ -1,6 +1,7 @@
 import logging
+from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
-from datetime import datetime, timedelta, time as dt_time
+
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class BookingAutomation:
             return {"valid": True}
 
         except Exception as e:
-            return {"valid": False, "message": f"Invalid input: {str(e)}"}
+            return {"valid": False, "message": f"Invalid input: {e!s}"}
 
     # =========================================================
     # FIND ROOMS

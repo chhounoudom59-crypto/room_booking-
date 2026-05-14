@@ -5,8 +5,8 @@ One-time or scheduled task to ingest policy documents into the RAG system.
 Loads policy.md into the booking_policies collection in ChromaDB.
 """
 
-import os
 import logging
+import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,6 @@ def verify_policy_ingestion():
 
 if __name__ == "__main__":
     # For standalone testing (outside Django)
-    import django
     from django.conf import settings
 
     if not settings.configured:

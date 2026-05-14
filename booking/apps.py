@@ -7,5 +7,3 @@ class BookingConfig(AppConfig):
 
     def ready(self):
         """Import signals when the app is ready"""
-        import booking.signals
-        import booking.telegram_notifications  # Import Telegram notifications
