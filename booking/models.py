@@ -1,10 +1,10 @@
-from django.db import models
+from datetime import datetime, time, timedelta
+
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import AbstractUser
-from datetime import timedelta, datetime, time
 
 
 class Room(models.Model):
@@ -989,6 +989,6 @@ def validate_booking_time_slot(start_time, end_time):
         return True
 
     except Exception as e:
-        raise ValidationError(f'Booking validation error: {str(e)}')
+        raise ValidationError(f'Booking validation error: {e!s}')
 
 

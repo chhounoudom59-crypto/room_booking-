@@ -1,20 +1,20 @@
+import logging
+
+from asgiref.sync import async_to_sync
+from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render, redirect
-from asgiref.sync import async_to_sync
-import logging
 
 logger = logging.getLogger(__name__)
 
 from chatbot.controllers.chat_controller import (
     chatbot_index,
-    health_check,
-    clear_session,
     chat_endpoint,
+    clear_session,
     confirm_booking,
+    health_check,
 )
-
 
 # -----------------------------
 # Chat Endpoint - Handles Both GET and POST

@@ -1,5 +1,6 @@
-from django.urls import include, path
-from . import views, admin_views, api_views
+from django.urls import path
+
+from . import admin_views, api_views, views
 
 app_name = 'booking'
 

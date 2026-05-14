@@ -1,6 +1,7 @@
 # ===== booking/context_processors.py =====
-from django.utils import timezone
 from django.db.models import Q
+from django.utils import timezone
+
 
 def room_types(request):
     """Add room types to template context"""

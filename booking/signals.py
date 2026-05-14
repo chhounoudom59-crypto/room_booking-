@@ -2,16 +2,17 @@
 Django signals for booking app
 Handles automatic Google Calendar integration
 """
-from django.db.models.signals import post_save, post_delete, pre_save
+import logging
+
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
-from django.utils import timezone
-from .models import Booking
+
 from .google_calendar import (
     create_calendar_event_for_booking,
+    delete_calendar_event_for_booking,
     update_calendar_event_for_booking,
-    delete_calendar_event_for_booking
 )
-import logging
+from .models import Booking
 
 logger = logging.getLogger(__name__)
 

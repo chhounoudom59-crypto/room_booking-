@@ -1,9 +1,10 @@
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.contrib.auth.models import Group
-from django.contrib.auth import get_user_model
 import logging
+
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.shortcuts import redirect
 
 logger = logging.getLogger(__name__)
 User = get_user_model()

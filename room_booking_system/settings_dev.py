@@ -1,5 +1,6 @@
-from .settings import *
 import os
+
+from .settings import *
 
 # Development environment settings
 DEBUG = True

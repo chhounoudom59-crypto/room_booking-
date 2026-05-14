@@ -10,19 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='announcement',
-            new_name='announcemen_is_acti_13e55a_idx',
-            old_name='announcement_active_show_until_idx',
-        ),
-        migrations.RenameIndex(
-            model_name='announcement',
-            new_name='announcemen_announc_b7733d_idx',
-            old_name='announcement_type_idx',
-        ),
-        migrations.RenameIndex(
-            model_name='announcement',
-            new_name='announcemen_priorit_370592_idx',
-            old_name='announcement_priority_idx',
-        ),
+        # Canonical migration 0001 already contains the shortened index names.
+        # Keep this migration as a no-op for compatibility with alternate
+        # migration histories.
     ]

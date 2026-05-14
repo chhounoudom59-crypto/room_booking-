@@ -1,15 +1,15 @@
-import os
 import logging
+import os
 import time
-import requests
-from typing import Optional, List
+from typing import List, Optional
 
+import requests
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
+from semantic_kernel.connectors.ai.prompt_execution_settings import PromptExecutionSettings
 from semantic_kernel.contents.chat_history import ChatHistory
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
-from semantic_kernel.connectors.ai.prompt_execution_settings import PromptExecutionSettings
 
 logger = logging.getLogger(__name__)
 

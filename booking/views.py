@@ -1,29 +1,35 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
+from datetime import datetime, time, timedelta
+
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
-from django.http import JsonResponse, HttpResponse
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime, timedelta, time
-from django.contrib.auth import get_user_model
-from .models import Room, Booking, BookingRule, Announcement
+
+from .models import Booking, BookingRule, Room
 
 User = get_user_model()
 
-from booking.utils import BookingRuleEnforcer
-from .forms import (
-    RoomForm, RoomSearchForm, BookingForm, BookingSearchForm,
-    QuickBookingForm, BookingRuleForm,
-)
 import json
+
 from allauth.socialaccount.models import SocialAccount, SocialToken
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
 from django.conf import settings
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+from booking.utils import BookingRuleEnforcer
+
+from .forms import (
+    BookingForm,
+    QuickBookingForm,
+    RoomForm,
+    RoomSearchForm,
+)
 
 
 @login_required
@@ -486,7 +492,7 @@ def check_availability(request):
     except Exception as e:
         return JsonResponse({
             'available': False,
-            'message': f'Error checking availability: {str(e)}'
+            'message': f'Error checking availability: {e!s}'
         })
 
 @require_http_methods(["POST"])
@@ -646,7 +652,7 @@ def check_booking_rules(user, room, start_datetime, end_datetime):
     except Exception as e:
         return {
             'valid': False,
-            'message': f'Error checking booking rules: {str(e)}'
+            'message': f'Error checking booking rules: {e!s}'
         }
 
 @login_required
@@ -825,7 +831,7 @@ def create_booking(request):
                 messages.success(request, 'Room booked successfully! Your reservation is confirmed.')
                 return redirect('booking:user_bookings')
             except Exception as e:
-                messages.error(request, f'Error creating booking: {str(e)}')
+                messages.error(request, f'Error creating booking: {e!s}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -951,7 +957,7 @@ def check_room_availability(request):
     except Room.DoesNotExist:
         return JsonResponse({'error': 'Room not found'}, status=404)
     except ValueError as e:
-        return JsonResponse({'error': f'Invalid date/time format: {str(e)}'}, status=400)
+        return JsonResponse({'error': f'Invalid date/time format: {e!s}'}, status=400)
 
 @login_required
 def quick_book(request, room_id):
@@ -974,7 +980,7 @@ def quick_book(request, room_id):
                 messages.success(request, 'Room booked successfully! Your reservation is confirmed.')
                 return redirect('booking:booking_detail', booking_id=booking.id)
             except Exception as e:
-                messages.error(request, f'Error creating booking: {str(e)}')
+                messages.error(request, f'Error creating booking: {e!s}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -1103,7 +1109,7 @@ def modify_booking(request, booking_id):
                 messages.success(request, 'Booking modified successfully!')
                 return redirect('booking:booking_detail', booking_id=booking.id)
             except Exception as e:
-                messages.error(request, f'Error modifying booking: {str(e)}')
+                messages.error(request, f'Error modifying booking: {e!s}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -1117,6 +1123,7 @@ def modify_booking(request, booking_id):
     return render(request, 'UserPage/modify_booking.html', context)
 
 from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def booking_schedule_by_day(request):
@@ -1249,11 +1256,11 @@ def check_room_availability_ajax(request):
     except ValueError as e:
         return JsonResponse({
             'available': False,
-            'error': f'Invalid date/time format: {str(e)}'
+            'error': f'Invalid date/time format: {e!s}'
         })
     except Exception as e:
         return JsonResponse({
             'available': False,
-            'error': f'Server error: {str(e)}'
+            'error': f'Server error: {e!s}'
         })
 

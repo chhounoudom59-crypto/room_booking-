@@ -1,7 +1,8 @@
 import logging
 from typing import Annotated
-from semantic_kernel.functions import kernel_function
+
 from asgiref.sync import sync_to_async
+from semantic_kernel.functions import kernel_function
 
 logger = logging.getLogger(__name__)
 

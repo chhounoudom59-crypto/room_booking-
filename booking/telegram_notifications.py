@@ -18,13 +18,14 @@ def send_support_message_to_telegram(name, email, subject, message):
     for chat_id in ADMIN_CHAT_IDS:
         logger.info(f"[DEBUG] Sending Telegram alert to chat_id: {chat_id}")
         send_telegram_message(chat_id, alert_msg, parse_mode='Markdown')
-import requests
 import logging
+
+import requests
 from django.conf import settings
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+
 from .models import Booking
-from accounts.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ def send_telegram_message(chat_id, message, parse_mode='Markdown'):
             logger.error(f"Failed to send Telegram message: {response.text}")
             return False
     except Exception as e:
-        logger.error(f"Error sending Telegram message: {str(e)}")
+        logger.error(f"Error sending Telegram message: {e!s}")
         return False
 
 def format_booking_notification(booking, action="created"):

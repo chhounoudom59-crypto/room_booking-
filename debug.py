@@ -1,5 +1,6 @@
 import traceback
+
 try:
-    import room_booking_system.settings
+    pass
 except Exception:
     traceback.print_exc()

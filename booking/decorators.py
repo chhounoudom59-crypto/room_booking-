@@ -1,8 +1,10 @@
 # booking/decorators.py
 from functools import wraps
-from django.shortcuts import redirect
+
 from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
+
 
 def admin_required(view_func):
     """Decorator to require admin privileges"""

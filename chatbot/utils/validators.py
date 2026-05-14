@@ -3,9 +3,8 @@ Validation helpers for chatbot HTTP payloads and booking logic.
 Production-safe version (clean + strict + predictable).
 """
 
-from typing import Any, Dict, Optional, Tuple
 import json
-
+from typing import Any, Dict, Optional, Tuple
 
 # =========================
 # JSON BODY PARSER

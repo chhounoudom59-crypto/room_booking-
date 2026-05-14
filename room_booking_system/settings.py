@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from decouple import config
 
 # Optional PyMySQL shim: only install if the package is available.
@@ -147,6 +148,7 @@ USE_TZ = True
 
 # Deepseek (hosted LLM) configuration - set these in your environment
 from decouple import config as _config
+
 DEEPSEEK_API_KEY = _config('DEEPSEEK_API_KEY', default='')
 DEEPSEEK_BASE_URL = _config('DEEPSEEK_BASE_URL', default='https://api.deepseek.com/v1')
 
@@ -184,10 +186,10 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # Email backend (from .env, fallback to console for dev)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default=None)
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default=None)
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default=None)
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', default='587', cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Room Booking System <noreply@rupp.edu.kh>')
 EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Room Booking] ')

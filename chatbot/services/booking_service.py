@@ -58,7 +58,7 @@ async def find_best_rooms(booking_automation, criteria: dict, limit: int = 3):
 	except Exception as e:
 		return {
 			"success": False,
-			"error": f"find_best_rooms_failed: {str(e)}",
+			"error": f"find_best_rooms_failed: {e!s}",
 			"rooms": []
 		}
 
@@ -80,5 +80,5 @@ async def auto_book(booking_automation, user, criteria: dict):
 	except Exception as e:
 		return {
 			"success": False,
-			"error": f"auto_book_failed: {str(e)}"
+			"error": f"auto_book_failed: {e!s}"
 		}

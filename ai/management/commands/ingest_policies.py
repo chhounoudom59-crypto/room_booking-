@@ -6,6 +6,7 @@ Run once after initial setup.
 """
 
 from django.core.management.base import BaseCommand
+
 from ai.ingest_policies import ingest_policy_document, verify_policy_ingestion
 
 
