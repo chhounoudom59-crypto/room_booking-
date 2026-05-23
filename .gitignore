@@ -54,3 +54,5 @@ Thumbs.db
 
 # model
 streamlit_app/models/arcface/arc.onnx
+
+*.onnx
