@@ -1,0 +1,121 @@
+# =====================================================================
+# Staging Workflow
+# Triggers on push to staging branch OR stg-v* tags
+# Purpose: QA validation before production
+# =====================================================================
+name: Staging CI/CD
+
+on:
+  push:
+    branches:
+      - "staging"
+    tags:
+      - "stg-v*"
+  pull_request:
+    branches:
+      - "staging"
+
+env:
+  IMAGE: 12345chhounoudom/intelligent_room_booking
+
+jobs:
+  # ── Job 1: Run full CI suite ────────────────────────────────────
+  staging-ci:
+    name: Staging CI Tests
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: room_booking_system.settings
+      SECRET_KEY: ci-secret-key-staging
+      DEBUG: "False"
+      USE_SQLITE: "True"
+      AI_ENABLED: "False"
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements.ci.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.ci.txt
+          pip install pytest pytest-cov pytest-django ruff
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Lint with Ruff
+        run: ruff check .
+
+      - name: Run full test suite
+        run: |
+          pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=50 \
+            -v
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-coverage-report
+          path: coverage.xml
+
+  # ── Job 2: Build & push staging Docker image (tag pushes only) ──
+  staging-docker:
+    name: Build Staging Docker Image
+    needs: staging-ci
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/stg-v')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version from tag
+        id: extract
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/stg-v}"
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push staging image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:stg-${{ steps.extract.outputs.VERSION }}
+            ${{ env.IMAGE }}:testing
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Job summary
+        run: |
+          {
+            echo "## 🧪 Staging Image Pushed"
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Image | \`${{ env.IMAGE }}:stg-${{ steps.extract.outputs.VERSION }}\` |"
+            echo "| Alias | \`${{ env.IMAGE }}:testing\` |"
+          } >> $GITHUB_STEP_SUMMARY

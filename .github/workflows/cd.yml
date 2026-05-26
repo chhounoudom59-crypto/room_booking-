@@ -1,3 +1,9 @@
+# =====================================================================
+# CD Workflow — Django CD
+# Triggers on version tags: dev-v*, stg-v*, prod-v*
+# Builds Docker image and pushes to Docker Hub:
+#   12345chhounoudom/intelligent_room_booking
+# =====================================================================
 name: Django CD
 
 on:
@@ -8,85 +14,90 @@ on:
       - 'prod-v*'
 
 env:
-  REGISTRY: ${{ secrets.DOCKER_USERNAME }}/intelligent_room_booking
-  
+  # Docker Hub image (hardcoded — repo owner is 12345chhounoudom)
+  IMAGE: 12345chhounoudom/intelligent_room_booking
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # Job: Build Docker image and push to Docker Hub
+  # ─────────────────────────────────────────────────────────────────
   build-and-push:
+    name: Build & Push Docker Image
     runs-on: ubuntu-22.04
 
     steps:
+      # ── 1. Checkout ────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ── 2. Docker Buildx (multi-arch & layer cache support) ────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Registry
+      # ── 3. Log in to Docker Hub ────────────────────────────────────
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract Version and Tag
+      # ── 4. Parse tag → ENV + VERSION ──────────────────────────────
+      - name: Extract version and environment from tag
         id: extract
         shell: bash
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "Full Tag: $TAG"
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Git tag: $TAG"
 
           if [[ "$TAG" == dev-v* ]]; then
-            VERSION=${TAG#dev-v}
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "ENV=dev" >> $GITHUB_OUTPUT
+            VERSION="${TAG#dev-v}"
+            DEPLOY_ENV="dev"
+            ALIAS_TAG="master"
           elif [[ "$TAG" == stg-v* ]]; then
-            VERSION=${TAG#stg-v}
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "ENV=stg" >> $GITHUB_OUTPUT
+            VERSION="${TAG#stg-v}"
+            DEPLOY_ENV="stg"
+            ALIAS_TAG="testing"
           elif [[ "$TAG" == prod-v* ]]; then
-            VERSION=${TAG#prod-v}
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "ENV=prod" >> $GITHUB_OUTPUT
+            VERSION="${TAG#prod-v}"
+            DEPLOY_ENV="prod"
+            ALIAS_TAG="production"
           else
-            echo "Invalid tag format"
+            echo "ERROR: Unrecognised tag format: $TAG"
             exit 1
           fi
 
-      - name: Build and Push Docker Images
+          echo "VERSION=$VERSION"       >> $GITHUB_OUTPUT
+          echo "DEPLOY_ENV=$DEPLOY_ENV" >> $GITHUB_OUTPUT
+          echo "ALIAS_TAG=$ALIAS_TAG"   >> $GITHUB_OUTPUT
+
+      # ── 5. Build and push with Buildx (layer cache enabled) ────────
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.extract.outputs.DEPLOY_ENV }}-${{ steps.extract.outputs.VERSION }}
+            ${{ env.IMAGE }}:${{ steps.extract.outputs.ALIAS_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── 6. Job summary ─────────────────────────────────────────────
+      - name: Deployment summary
         shell: bash
         run: |
-          DEPLOY_ENV=${{ steps.extract.outputs.ENV }}
-          VERSION=${{ steps.extract.outputs.VERSION }}
-
-          if [[ "$DEPLOY_ENV" == "dev" ]]; then
-            docker build -t $REGISTRY:dev-$VERSION .
-            docker tag $REGISTRY:dev-$VERSION $REGISTRY:master
-            docker push $REGISTRY:dev-$VERSION
-            docker push $REGISTRY:master
-          elif [[ "$DEPLOY_ENV" == "stg" ]]; then
-            docker build -t $REGISTRY:stg-$VERSION .
-            docker tag $REGISTRY:stg-$VERSION $REGISTRY:testing
-            docker push $REGISTRY:stg-$VERSION
-            docker push $REGISTRY:testing
-          elif [[ "$DEPLOY_ENV" == "prod" ]]; then
-            docker build -t $REGISTRY:prod-$VERSION .
-            docker tag $REGISTRY:prod-$VERSION $REGISTRY:production
-            docker push $REGISTRY:prod-$VERSION
-            docker push $REGISTRY:production
-          fi
-
-      - name: Create deployment summary
-        shell: bash
-        run: |
-          DEPLOY_ENV=${{ steps.extract.outputs.ENV }}
-          VERSION=${{ steps.extract.outputs.VERSION }}
-
+          ENV="${{ steps.extract.outputs.DEPLOY_ENV }}"
+          VER="${{ steps.extract.outputs.VERSION }}"
+          ALIAS="${{ steps.extract.outputs.ALIAS_TAG }}"
           {
-            echo "## Docker Image Pushed"
+            echo "## ✅ Docker Image Pushed to Docker Hub"
             echo ""
-            echo "**Image:** $REGISTRY"
-            echo "**Environment:** $DEPLOY_ENV"
-            echo "**Version:** $VERSION"
-            echo "**Tags:** $DEPLOY_ENV-$VERSION and the environment alias tag"
+            echo "| Field       | Value |"
+            echo "|-------------|-------|"
+            echo "| **Image**   | \`${{ env.IMAGE }}\` |"
+            echo "| **Environment** | \`$ENV\` |"
+            echo "| **Version** | \`$VER\` |"
+            echo "| **Tags pushed** | \`$ENV-$VER\`, \`$ALIAS\` |"
+            echo "| **Docker Hub** | https://hub.docker.com/r/12345chhounoudom/intelligent_room_booking |"
           } >> $GITHUB_STEP_SUMMARY

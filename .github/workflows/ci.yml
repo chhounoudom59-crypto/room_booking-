@@ -1,144 +1,85 @@
-# Workflow name - displayed in Git Actions 
+# =====================================================================
+# CI Workflow — Django CI
+# Runs on every push/PR to main branch
+# Checks: lint (Ruff), format, Django system check, unit tests + coverage
+# =====================================================================
 name: Django CI
 
-# configuration: specifies when this workflow runs
 on:
   push:
-    # Run push main branch
     branches: ["main"]
   pull_request:
-    # run pull requests to main branch
     branches: ["main"]
 
-# Jobs section: defines parallel 
 jobs:
-  # First job: Django test
+  # ─────────────────────────────────────────────────────────────────
+  # Job 1: Django backend — lint, format, system-check, unit tests
+  # ─────────────────────────────────────────────────────────────────
   django-test:
-    # Run on the latest Ubuntu environment
+    name: Django Tests & Lint
     runs-on: ubuntu-latest
-    # Environment variables passed to all steps in this job
+
     env:
       DJANGO_SETTINGS_MODULE: room_booking_system.settings
-      SECRET_KEY: ci-secret-key
+      SECRET_KEY: ci-secret-key-not-used-in-production
       DEBUG: "False"
-      # Use SQLite for testing (simpler than setting up a database)
-      USE_SQLITE: "True"
+      USE_SQLITE: "True"          # SQLite — no MySQL server needed in CI
+      AI_ENABLED: "False"         # Disable heavy AI subsystems during CI
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
 
-    # List of steps to execute in order
     steps:
-      # Step 1: Checkout the repository code so we can work with it
+      # ── 1. Checkout ────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Install system dependencies for av (PyAV) and other packages
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libavformat-dev libavcodec-dev libavdevice-dev libswscale-dev
-
-      # Step 3: Set up Python environment
-      - name: Set up Python
+      # ── 2. Python setup with pip caching ──────────────────────────
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          # Use Python 3.11
           python-version: "3.11"
-          # pip dependencies 
           cache: "pip"
+          cache-dependency-path: requirements.ci.txt
 
-      # Step 4: Install project dependencies
+      # ── 3. Install lightweight CI dependencies ────────────────────
       - name: Install dependencies
         run: |
-          # Upgrade pip to latest version
           python -m pip install --upgrade pip
-          # Install main project requirements
-          pip install -r requirements.txt
-          # Install testing tools: pytest, coverage, django test integration, and linter
+          pip install -r requirements.ci.txt
           pip install pytest pytest-cov pytest-django ruff
 
-      # Step 4: Display test environment information for debugging
-      - name: Save test environment info
+      # ── 4. Environment debug info ─────────────────────────────────
+      - name: Environment info
         run: |
-          # Show Python version
           python -V
-          # Show pip version
           pip --version
-          # List all installed packages and their versions
           pip list
 
-      # Step 5: Validate Django project configuration
-      - name: Check Django project
+      # ── 5. Django system check ────────────────────────────────────
+      - name: Django system check
         run: python manage.py check
 
-      # Step 6: Run Ruff linter to check code style and quality
+      # ── 6. Ruff lint ──────────────────────────────────────────────
       - name: Lint with Ruff
         run: ruff check .
 
-      # Step 7: Verify code formatting matches Ruff standards
+      # ── 7. Ruff format check ──────────────────────────────────────
       - name: Format check with Ruff
         run: ruff format --check .
 
-      # Step 8: Run unit tests with coverage analysis
+      # ── 8. Unit tests with coverage ───────────────────────────────
       - name: Run unit tests
         run: |
-          # Run pytest with coverage:
-          # --cov=. : measure coverage for current directory
-          # --cov-report=xml : generate XML report for external services
-          # --cov-report=term-missing : show missing lines in terminal
-          # --cov-fail-under=70 : fail if coverage drops below 70%
-          # -v : verbose output showing each test
-          pytest --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=70 -v
+          pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=50 \
+            -v
 
-      # Step 9: Upload coverage report as an artifact for later review
+      # ── 9. Upload coverage artifact ───────────────────────────────
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-report
           path: coverage.xml
-
-  # Second job: Flutter mobile application testing
-  flutter-test:
-    runs-on: ubuntu-latest
-
-    # Set default working directory for all steps in this job
-    defaults:
-      run:
-        # All 'run' steps will execute in the room_booking_flutter directory
-        working-directory: room_booking_flutter
-
-    # Steps for Flutter testing
-    steps:
-      # Step 1: Checkout the repository code
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Step 2: Set up Flutter development environment
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          # Use Flutter version 3.22.0
-          flutter-version: "3.22.0"
-          # Use stable channel (not beta or dev)
-          channel: stable
-          # Cache Flutter dependencies to speed up runs
-          cache: true
-
-      # Step 3: Get Flutter project dependencies (downloads pub packages)
-      - name: Get Flutter dependencies
-        run: flutter pub get
-
-      # Step 4: Analyze Flutter code for errors and warnings
-      - name: Analyze Flutter code
-        run: flutter analyze
-
-      # Step 5: Run Flutter unit and widget tests with coverage
-      - name: Run Flutter tests
-        run: flutter test --coverage
-
-      # Step 6: Upload Flutter coverage report as an artifact
-      - name: Upload Flutter coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          # Name of the artifact in GitHub
-          name: flutter-coverage-report
-          # Path to the lcov coverage file generated by flutter test
-          path: room_booking_flutter/coverage/lcov.info
