@@ -48,6 +48,8 @@ urlpatterns = [
 
     # Mobile API endpoints for the Flutter app
     path('api/login/', mobile_api.mobile_login, name='api_login'),
+    path('api/register/', mobile_api.mobile_register, name='api_register'),
+    path('api/logout/', mobile_api.mobile_logout, name='api_logout'),
     path('api/profile/', mobile_api.mobile_profile, name='api_profile'),
 
     # Registration URL

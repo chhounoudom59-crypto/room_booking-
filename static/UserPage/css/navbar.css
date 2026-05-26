@@ -1,0 +1,320 @@
+/* ════════════════════════════════════════════════════════════
+   RUPP Room Booking — GitHub-style Responsive Navbar
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Reset ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Header ──────────────────────────────────────────────── */
+.gh-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #24292f;
+    border-bottom: 1px solid #444c56;
+    height: 56px;
+    display: flex;
+    align-items: center;
+}
+
+.gh-header-inner {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* ── Logo ────────────────────────────────────────────────── */
+.gh-logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.gh-logo-img {
+    height: 32px;
+    width: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: white;
+    padding: 2px;
+}
+
+.gh-logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.gh-logo-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+}
+
+.gh-logo-sub {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.01em;
+}
+
+/* ── Desktop Nav ─────────────────────────────────────────── */
+.gh-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.gh-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.gh-nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+}
+
+.gh-nav-link.active {
+    background: rgba(255,255,255,0.12);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.gh-nav-link i {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+.gh-nav-logout {
+    color: #f85149;
+    margin-left: 4px;
+}
+
+.gh-nav-logout:hover {
+    background: rgba(248, 81, 73, 0.12);
+    color: #ff7b72;
+}
+
+/* ── Hamburger ───────────────────────────────────────────── */
+.gh-hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0;
+    transition: border-color 0.15s;
+}
+
+.gh-hamburger:hover {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.08);
+}
+
+.gh-bar {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+    transform-origin: center;
+}
+
+/* Hamburger → X animation */
+.gh-hamburger.open .gh-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.gh-hamburger.open .gh-bar:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.gh-hamburger.open .gh-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Overlay ─────────────────────────────────────────────── */
+.gh-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.25s;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+.gh-overlay.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* ── Mobile Drawer ───────────────────────────────────────── */
+.gh-drawer {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 300px;
+    height: 100vh;
+    background: #ffffff;
+    z-index: 1002;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.gh-drawer.open {
+    right: 0;
+}
+
+.gh-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #24292f;
+    border-bottom: 1px solid #444c56;
+    color: white;
+}
+
+.gh-drawer-header span {
+    flex: 1;
+}
+
+.gh-drawer-close {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.gh-drawer-close:hover {
+    color: #ffffff;
+    background: rgba(255,255,255,0.1);
+}
+
+.gh-drawer-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.gh-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #24292f;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.gh-drawer-link i {
+    font-size: 1rem;
+    color: #636c76;
+    width: 20px;
+    text-align: center;
+    transition: color 0.12s;
+}
+
+.gh-drawer-link:hover {
+    background: #f6f8fa;
+    color: #0969da;
+    border-left-color: #0969da;
+}
+
+.gh-drawer-link:hover i {
+    color: #0969da;
+}
+
+.gh-drawer-link.active {
+    background: #ddf4ff;
+    color: #0969da;
+    border-left-color: #0969da;
+    font-weight: 600;
+}
+
+.gh-drawer-link.active i {
+    color: #0969da;
+}
+
+.gh-drawer-logout {
+    color: #cf222e;
+}
+
+.gh-drawer-logout i {
+    color: #cf222e;
+}
+
+.gh-drawer-logout:hover {
+    background: #ffebe9;
+    color: #a40e26;
+    border-left-color: #cf222e;
+}
+
+.gh-drawer-divider {
+    height: 1px;
+    background: #d0d7de;
+    margin: 8px 16px;
+}
+
+/* ── Body top-padding to prevent content hiding under sticky header ── */
+body {
+    padding-top: 0;
+}
+
+/* Remove old .header styles if they conflict */
+.header {
+    display: none !important;
+}
+
+/* ── Responsive breakpoints ─────────────────────────────── */
+@media (max-width: 900px) {
+    .gh-logo-sub { display: none; }
+    .gh-nav-link { padding: 6px 8px; font-size: 0.82rem; gap: 4px; }
+    .gh-nav-link i { display: none; }
+}
+
+@media (max-width: 700px) {
+    .gh-nav { display: none; }
+    .gh-hamburger { display: flex; }
+}
+
+@media (min-width: 701px) {
+    .gh-drawer, .gh-overlay { display: none !important; }
+}

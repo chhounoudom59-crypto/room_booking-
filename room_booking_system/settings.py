@@ -14,7 +14,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+
+# ALLOWED_HOSTS configuration - split on comma if set, otherwise allow all
+_allowed_hosts = config('ALLOWED_HOSTS', default='*').split(',')
+ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts if host.strip()]
+
+# Add Android emulator IP for development
+if DEBUG:
+    if '10.0.2.2' not in ALLOWED_HOSTS and '*' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('10.0.2.2')
 
 # Installed apps
 INSTALLED_APPS = [
@@ -42,7 +50,7 @@ INSTALLED_APPS = [
 
 # Enable chatbot app only if importable to avoid startup errors when it's not installed
 try:
-    import importlib
+    import importlib.util
     if importlib.util.find_spec('chatbot') is not None:
         INSTALLED_APPS.append('chatbot.apps.ChatbotConfig')
 except Exception:
@@ -156,9 +164,17 @@ DEEPSEEK_BASE_URL = _config('DEEPSEEK_BASE_URL', default='https://api.deepseek.c
 GROQ_API_KEY = _config('GROQ_API_KEY', default='')
 GROQ_MODEL = _config('GROQ_MODEL', default='llama-3.1-8b-instant')
 
-# Hugging Face (free alternative LLM) configuration - DEPRECATED (API shut down Dec 2025)
-HF_API_KEY = _config('HF_API_KEY', default='')
-HF_MODEL = _config('HF_MODEL', default='microsoft/DialoGPT-medium')
+# LLM provider: ollama | huggingface | groq
+LLM_PROVIDER = _config('LLM_PROVIDER', default='ollama').lower().strip()
+
+# Ollama (local)
+OLLAMA_MODEL = _config('OLLAMA_MODEL', default='gemma3:1b')
+OLLAMA_BASE_URL = _config('OLLAMA_BASE_URL', default='http://localhost:11434')
+
+# Hugging Face Inference Providers (https://router.huggingface.co/v1)
+HF_API_KEY = _config('HF_API_KEY', default='') or _config('HF_API_TOKEN', default='')
+HF_MODEL = _config('HF_MODEL', default='Qwen/Qwen2.5-7B-Instruct')
+HF_BASE_URL = _config('HF_BASE_URL', default='https://router.huggingface.co/v1')
 
 # Static and Media files
 STATIC_URL = '/static/'

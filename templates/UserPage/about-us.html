@@ -10,22 +10,7 @@
     <link rel="stylesheet" href="{% static 'UserPage/css/about-us.css' %}">
 </head>
 <body>
-    <div class="header">
-        <div class="logo">
-            <img src="https://upload.wikimedia.org/wikipedia/km/e/ee/Rupp_logo.png?20090803154844" alt="RUPP Logo">
-            <div>Royal University of Phnom Penh</div>
-        </div>
-
-        <div class="nav">
-            <a href="{% url 'accounts:user_dashboard' %}" class="nav-item">Home</a>
-            <a href="{% url 'accounts:booking' %}" class="nav-item">Booking</a>
-            <a href="{% url 'accounts:booked' %}" class="nav-item">Booked</a>
-            <a href="{% url 'accounts:setting' %}" class="nav-item">Setting</a>
-            <a href="{% url 'accounts:about_us' %}" class="nav-item active">About us</a>
-            <a href="{% url 'accounts:service' %}" class="nav-item">Service</a>
-            <a href="{% url 'accounts:logout' %}" class="nav-item" style="color:#e74c3c;"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-        </div>
-    </div>
+    {% include 'includes/user_navbar.html' %}
 
     <!-- About Us Page -->
     <main id="about">
@@ -79,7 +64,7 @@
         <p>Designed by: DSE TEAM</p>
     </footer>
 
-    {% include 'includes/chatbot_widget.html' %}
 
+    {% include 'includes/chatbot_widget.html' %}
 </body>
 </html>

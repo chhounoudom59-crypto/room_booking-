@@ -5,9 +5,9 @@ from . import admin_views, api_views, views
 app_name = 'booking'
 
 urlpatterns = [
-    # ============================================
+    
     # AI Chatbot API Endpoints (for Semantic Kernel)
-    # ============================================
+    
     path('api/rooms/', api_views.api_list_rooms, name='api_list_rooms'),
     path('api/rooms/availability/', api_views.api_check_availability, name='api_check_availability'),
     path('api/rooms/search/', api_views.api_search_rooms, name='api_search_rooms'),

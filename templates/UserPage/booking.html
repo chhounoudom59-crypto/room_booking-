@@ -4,232 +4,505 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Booking | RUPP Room Booking</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Book a Room — RUPP Room Booking</title>
+    <meta name="description" content="Book a room at Royal University of Phnom Penh. Select your room, date, time and purpose.">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- GitHub Primer + RuppUi Design Tokens (matches Flutter mobile app) -->
+    <link rel="stylesheet" href="{% static 'UserPage/css/github_theme.css' %}">
     <link rel="stylesheet" href="{% static 'UserPage/css/booking.css' %}">
-    <!-- Responsive CSS for mobile optimization -->
     <link rel="stylesheet" href="{% static 'UserPage/css/responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'UserPage/css/booking-inline.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'UserPage/js/booking.js' %}" defer></script>
     <script src="{% static 'UserPage/js/booking_conflicts.js' %}" defer></script>
+    <style>
+        /* ── Mirror Flutter BookingFormScreen layout ── */
+        body { background: var(--rupp-canvas); }
+
+        .booking-page-wrap {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 24px 16px 60px;
+        }
+
+        /* Page header — mirrors Flutter AppBar */
+        .booking-page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--rupp-text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .booking-page-title i { color: var(--rupp-primary); }
+
+        /* Card — mirrors Flutter Container(decoration: BoxDecoration border) */
+        .bk-card {
+            background: var(--rupp-card);
+            border: 1px solid var(--rupp-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        /* Section label — mirrors Flutter _label() */
+        .bk-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--rupp-text-dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* Inputs — mirrors Flutter InputDecoration */
+        .bk-input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            color: var(--rupp-text-dark);
+            background: #fff;
+            border: 1.5px solid var(--rupp-border);
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            font-family: var(--font-body, 'Inter', sans-serif);
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .bk-input:focus {
+            border-color: var(--rupp-primary);
+            box-shadow: 0 0 0 3px rgba(74,63,105,0.12);
+        }
+        .bk-input::placeholder { color: var(--rupp-text-muted); }
+
+        /* Time grid */
+        .bk-time-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Timeline */
+        .bk-timeline {
+            background: var(--rupp-canvas);
+            border: 1px solid var(--rupp-border);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 13px;
+        }
+        .bk-timeline-slot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--rupp-border);
+        }
+        .bk-timeline-slot:last-child { border-bottom: none; }
+
+        /* Policy / checkbox */
+        .bk-policy-box {
+            background: var(--color-canvas-inset, #F1F4F8);
+            border: 1px solid var(--rupp-border);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 13px;
+            color: var(--rupp-text-muted);
+        }
+        .bk-policy-box ul { padding-left: 18px; margin: 8px 0; }
+        .bk-checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--rupp-text-dark);
+        }
+        .bk-checkbox-row input[type=checkbox] {
+            margin-top: 2px;
+            accent-color: var(--rupp-primary);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Submit button — mirrors Flutter ElevatedButton(successEmphasis) */
+        .bk-submit-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--rupp-primary);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.15s, transform 0.1s;
+            margin-top: 4px;
+        }
+        .bk-submit-btn:hover  { background: var(--rupp-primary-dark); transform: translateY(-1px); }
+        .bk-submit-btn:active { transform: translateY(0); }
+        .bk-submit-btn:disabled {
+            background: var(--rupp-border);
+            color: var(--rupp-text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Warning/info alerts using Primer tokens */
+        .bk-alert {
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+        .bk-alert-warning {
+            background: var(--color-warning-subtle);
+            border-color: rgba(154,103,0,0.3);
+            color: var(--color-warning-fg);
+        }
+        .bk-alert-info {
+            background: var(--color-accent-subtle);
+            border-color: var(--color-accent-muted);
+            color: var(--color-accent-emphasis);
+        }
+        .bk-alert-success {
+            background: var(--color-success-subtle);
+            border-color: rgba(26,127,55,0.3);
+            color: var(--color-success-fg);
+        }
+
+        /* Modal — mirrors Flutter AlertDialog */
+        .bk-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .bk-modal-backdrop.open { display: flex; }
+        .bk-modal {
+            background: #fff;
+            border: 1px solid var(--rupp-border);
+            border-radius: 16px;
+            width: min(480px, calc(100vw - 32px));
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            animation: bk-in 0.2s ease;
+            overflow: hidden;
+        }
+        @keyframes bk-in {
+            from { opacity:0; transform: scale(0.95) translateY(-10px); }
+            to   { opacity:1; transform: scale(1) translateY(0); }
+        }
+        .bk-modal-icon {
+            text-align: center;
+            padding: 28px 24px 8px;
+            font-size: 36px;
+            color: var(--rupp-primary);
+        }
+        .bk-modal-header { padding: 8px 24px 16px; text-align: center; }
+        .bk-modal-header h3 { font-size: 18px; font-weight: 700; color: var(--rupp-text-dark); margin: 0 0 4px; }
+        .bk-modal-header p  { font-size: 13px; color: var(--rupp-text-muted); margin: 0; }
+        .bk-modal-details {
+            padding: 0 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .bk-detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--rupp-border);
+        }
+        .bk-detail-row:last-child { border-bottom: none; }
+        .bk-detail-label { color: var(--rupp-text-muted); font-weight: 500; }
+        .bk-detail-value { color: var(--rupp-text-dark); font-weight: 600; }
+        .bk-modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 16px 24px 24px;
+        }
+        .bk-modal-cancel {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--rupp-border);
+            background: #fff;
+            color: var(--rupp-text-dark);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .bk-modal-confirm {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: var(--rupp-primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .bk-modal-confirm:hover { background: var(--rupp-primary-dark); }
+
+        /* Hint text */
+        .bk-hint { font-size: 12px; color: var(--rupp-text-muted); margin-top: 5px; }
+
+        /* Badge for timeline */
+        .bk-slot-badge {
+            padding: 2px 10px;
+            border-radius: 2em;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .bk-slot-available  { background: var(--color-success-subtle); color: var(--color-success-fg); }
+        .bk-slot-occupied   { background: var(--color-warning-subtle); color: var(--color-warning-fg); }
+        .bk-slot-unavailable{ background: var(--color-canvas-inset);   color: var(--rupp-text-muted);  }
+
+        @media (max-width: 480px) {
+            .bk-time-grid { grid-template-columns: 1fr; }
+            .bk-modal-actions { grid-template-columns: 1fr; }
+        }
+
+        /* Hide old Bootstrap/generic container styles from interfering */
+        .container { max-width: none !important; padding: 0 !important; }
+    </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">
-            <img src="https://upload.wikimedia.org/wikipedia/km/e/ee/Rupp_logo.png?20090803154844" alt="RUPP Logo">
-            <div>Royal University of Phnom Penh</div>
-        </div>
-        <div class="nav">
-            <a href="{% url 'accounts:user_dashboard' %}" class="nav-item">Home</a>
-            <a href="{% url 'accounts:booking' %}" class="nav-item active">Booking</a>
-            <a href="{% url 'accounts:booked' %}" class="nav-item">Booked</a>
-            <a href="{% url 'accounts:setting' %}" class="nav-item">Setting</a>
-            <a href="{% url 'accounts:about_us' %}" class="nav-item">About us</a>
-            <a href="{% url 'accounts:service' %}" class="nav-item">Service</a>
-            <a href="{% url 'accounts:logout' %}" class="nav-item" style="color:#e74c3c;"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-        </div>
-    </div>
+    {% include 'includes/user_navbar.html' %}
 
-    <div class="container">
-        <!-- Announcements Section -->
-        {% if announcements %}
-        <div class="announcements-section mb-3">
-            {% for announcement in announcements %}
-            <div class="alert alert-{% if announcement.priority == 'urgent' %}danger{% elif announcement.priority == 'high' %}warning{% elif announcement.priority == 'normal' %}info{% else %}secondary{% endif %} alert-dismissible fade show" role="alert">
-                <h6 class="alert-heading mb-1">
-                    <i class="fas fa-{% if announcement.announcement_type == 'emergency' %}exclamation-triangle{% elif announcement.announcement_type == 'event' %}calendar{% else %}info-circle{% endif %}"></i>
-                    {{ announcement.title }}
-                </h6>
-                <p class="mb-1">{{ announcement.content }}</p>
-                <small class="text-muted">{{ announcement.get_announcement_type_display }} • {{ announcement.created_at|date:"M d, Y" }}</small>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
+    <div class="booking-page-wrap">
+
+        <!-- Page Title — matches Flutter AppBar -->
+        <div class="booking-page-title">
+            <i class="fas fa-calendar-plus"></i>
+            Book a Room
         </div>
+
+        <!-- Announcements -->
+        {% if announcements %}
+        {% for announcement in announcements %}
+        <div class="bk-alert bk-alert-{% if announcement.priority == 'urgent' %}warning{% elif announcement.priority == 'high' %}warning{% else %}info{% endif %}" style="margin-bottom:12px;">
+            <strong><i class="fas fa-{% if announcement.announcement_type == 'emergency' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            {{ announcement.title }}</strong>
+            <div style="margin-top:4px;">{{ announcement.content }}</div>
+        </div>
+        {% endfor %}
         {% endif %}
-        
+
         <!-- Django Messages -->
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
+        {% for message in messages %}
+        <div class="bk-alert bk-alert-info" style="margin-bottom:12px;">{{ message }}</div>
+        {% endfor %}
         {% endif %}
 
-        {% if not profile_complete_for_booking %}
-            <div class="alert alert-warning" role="alert">
-                <strong>Profile incomplete:</strong> Please complete these fields before booking: {{ missing_profile_fields|join:", " }}.
-                <a href="{% url 'accounts:profile_setting' %}" class="alert-link">Update profile now</a>
-            </div>
-        {% endif %}
-
-        {% if booking_approval_status != 'approved' %}
-            <div class="alert alert-warning" role="alert">
-                <strong>Booking access {{ booking_approval_status }}:</strong>
-                Your lecturer verification is not approved yet. Please complete your profile and wait for admin approval before booking.
-            </div>
+        <!-- Lock Warning — mirrors Flutter profile check banner -->
+        {% if not profile_complete_for_booking or booking_approval_status != 'approved' %}
+        <div class="bk-alert bk-alert-warning">
+            <strong><i class="fas fa-lock" style="margin-right:6px;"></i>Booking locked — complete these steps first:</strong>
+            <ol style="margin:8px 0 0;padding-left:20px;font-size:13px;">
+                {% if not profile_complete_for_booking %}
+                <li>Complete your profile — missing: {{ missing_profile_fields|join:", " }}.
+                    <a href="{% url 'accounts:profile_setting' %}" style="color:inherit;font-weight:600;">Go to Profile Settings →</a></li>
+                {% else %}<li style="color:var(--color-success-fg);">✓ Profile complete</li>{% endif %}
+                {% if booking_approval_status != 'approved' %}
+                <li>Wait for admin approval — status: <em>{{ booking_approval_status }}</em></li>
+                {% else %}<li style="color:var(--color-success-fg);">✓ Admin approved</li>{% endif %}
+            </ol>
+        </div>
         {% endif %}
 
         <form method="post" action="{% url 'accounts:create_booking' %}" id="bookingForm">
             {% csrf_token %}
-            <div class="card">
-                <!-- Building select removed as requested -->
-                
-                <div class="section">
-                    <div class="section-title">Room</div>
-                    <div class="dropdown-container">
-                        <select id="roomSelect" name="room" class="form-control" required>
-                            <option value="" disabled selected>Select Room</option>
-                            {% for room in rooms %}
-                                {% if not room.is_available or room.availability_status == 'unavailable' %}
-                                    <option value="{{ room.id }}" data-min-capacity="{{ room.min_booking_capacity|default:1 }}" data-max-capacity="{{ room.max_booking_capacity|default:room.capacity }}" data-effective-status="unavailable" disabled style="color: #aaa;">{{ room.name }} ({{ room.room_number }}) [Unavailable] - Capacity {{ room.min_booking_capacity|default:1 }}-{{ room.max_booking_capacity|default:room.capacity }}</option>
-                                {% else %}
-                                    <option value="{{ room.id }}" data-min-capacity="{{ room.min_booking_capacity|default:1 }}" data-max-capacity="{{ room.max_booking_capacity|default:room.capacity }}" data-effective-status="available">{{ room.name }} ({{ room.room_number }}) [Available] - Capacity {{ room.min_booking_capacity|default:1 }}-{{ room.max_booking_capacity|default:room.capacity }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                
-                
+
+            <!-- Card 1: Room Selection — mirrors Flutter _roomSection() -->
+            <div class="bk-card">
+                <label class="bk-label" for="roomSelect">
+                    <i class="fas fa-door-open" style="color:var(--rupp-primary);margin-right:6px;"></i>Select Room
+                </label>
+                <select id="roomSelect" name="room" class="bk-input" required>
+                    <option value="" disabled selected>Select a room…</option>
+                    {% for room in rooms %}
+                        {% if not room.is_available or room.availability_status == 'unavailable' %}
+                            <option value="{{ room.id }}"
+                                data-min-capacity="{{ room.min_booking_capacity|default:1 }}"
+                                data-max-capacity="{{ room.max_booking_capacity|default:room.capacity }}"
+                                data-effective-status="unavailable" disabled>
+                                {{ room.name }} ({{ room.room_number }}) — Unavailable
+                            </option>
+                        {% else %}
+                            <option value="{{ room.id }}"
+                                data-min-capacity="{{ room.min_booking_capacity|default:1 }}"
+                                data-max-capacity="{{ room.max_booking_capacity|default:room.capacity }}"
+                                data-effective-status="available">
+                                {{ room.name }} ({{ room.room_number }}) — Capacity {{ room.min_booking_capacity|default:1 }}–{{ room.max_booking_capacity|default:room.capacity }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
             </div>
 
-            <div class="card">
-                <div class="form-group">
-                    <div class="section-title">Date</div>
-                    <input type="date" id="dateInput" name="date" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <div class="section-title">Time</div>
-                    <div class="time-container">
-                        <div class="time-group">
-                            <label>Start Time:</label>
-                            <input type="time" id="startTime" name="start_time" class="form-control" required>
-                        </div>
-                        <div class="time-group">
-                            <label>End Time:</label>
-                            <input type="time" id="endTime" name="end_time" class="form-control" required>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <div class="section-title">Purpose</div>
-                    <select name="purpose" class="form-control" required>
-                        <option value="" selected disabled>Select booking purpose</option>
-                        <option value="lecture">Lecture</option>
-                        <option value="meeting">Meeting</option>
-                        <option value="workshop">Workshop</option>
-                        <option value="conference">Conference</option>
-                        <option value="seminar">Seminar</option>
-                        <option value="training">Training</option>
-                        <option value="other">Other</option>
-                    
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <div class="section-title">Number of Attendees</div>
-                    <input type="number" id="attendeesInput" name="attendees" class="form-control" placeholder="Enter expected number of attendees" min="1" max="200" required>
-                    <small id="capacityRangeHint" class="text-muted">Select a room to see allowed attendee range.</small>
-                </div>
-                            {% include 'includes/chatbot_widget.html' %}
-                
-                <div class="form-group">
-                    <div class="section-title">Additional Notes (Optional)</div>
-                    <textarea name="notes" class="form-control" rows="3" placeholder="Any special requirements or notes..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <div class="section-title">Room Status Timeline</div>
-                    <div id="roomTimeline" class="border rounded p-2 bg-light">
-                        <small class="text-muted">Select room and date to view hourly status from 07:00 to 22:00.</small>
-                    </div>
-                </div>
+            <!-- Card 2: Date & Time — mirrors Flutter date/time pickers -->
+            <div class="bk-card">
+                <label class="bk-label">
+                    <i class="fas fa-calendar" style="color:var(--rupp-primary);margin-right:6px;"></i>Date
+                </label>
+                <input type="date" id="dateInput" name="date" class="bk-input" required style="margin-bottom:16px;">
 
-                <div class="form-group">
-                    <div class="section-title">Usage Terms</div>
-                    <ul class="mb-2">
+                <label class="bk-label">
+                    <i class="fas fa-clock" style="color:var(--rupp-primary);margin-right:6px;"></i>Time
+                </label>
+                <div class="bk-time-grid">
+                    <div>
+                        <label class="bk-label" style="font-size:12px;color:var(--rupp-text-muted);font-weight:500;">Start Time</label>
+                        <input type="time" id="startTime" name="start_time" class="bk-input" required>
+                    </div>
+                    <div>
+                        <label class="bk-label" style="font-size:12px;color:var(--rupp-text-muted);font-weight:500;">End Time</label>
+                        <input type="time" id="endTime" name="end_time" class="bk-input" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Purpose & Attendees — mirrors Flutter _purposeDropdown + _attendeesField -->
+            <div class="bk-card">
+                <label class="bk-label" for="purposeSelect">
+                    <i class="fas fa-clipboard-list" style="color:var(--rupp-primary);margin-right:6px;"></i>Booking Purpose
+                </label>
+                <select id="purposeSelect" name="purpose" class="bk-input" required style="margin-bottom:16px;">
+                    <option value="" selected disabled>Select booking purpose</option>
+                    <option value="lecture">Lecture</option>
+                    <option value="meeting">Meeting</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="conference">Conference</option>
+                    <option value="seminar">Seminar</option>
+                    <option value="training">Training</option>
+                    <option value="other">Other</option>
+                </select>
+
+                <label class="bk-label" for="attendeesInput">
+                    <i class="fas fa-users" style="color:var(--rupp-primary);margin-right:6px;"></i>Number of Attendees
+                </label>
+                <input type="number" id="attendeesInput" name="attendees" class="bk-input"
+                    placeholder="Expected number of attendees" min="1" max="200" required>
+                <div class="bk-hint" id="capacityRangeHint">Select a room to see the allowed attendee range.</div>
+            </div>
+
+            <!-- Card 4: Notes -->
+            <div class="bk-card">
+                <label class="bk-label" for="notesInput">
+                    <i class="fas fa-sticky-note" style="color:var(--rupp-primary);margin-right:6px;"></i>Additional Notes <span style="font-weight:400;color:var(--rupp-text-muted);">(Optional)</span>
+                </label>
+                <textarea id="notesInput" name="notes" class="bk-input" rows="3"
+                    placeholder="Any special requirements or notes…" style="resize:vertical;"></textarea>
+            </div>
+
+            <!-- Card 5: Room Timeline -->
+            <div class="bk-card">
+                <div class="bk-label">
+                    <i class="fas fa-stream" style="color:var(--rupp-primary);margin-right:6px;"></i>Room Status Timeline
+                </div>
+                <div id="roomTimeline" class="bk-timeline">
+                    <span style="color:var(--rupp-text-muted);font-size:13px;">Select a room and date to view availability from 07:00–22:00.</span>
+                </div>
+            </div>
+
+            <!-- Card 6: Policy — mirrors Flutter _policySection() -->
+            <div class="bk-card">
+                <div class="bk-label">
+                    <i class="fas fa-shield-alt" style="color:var(--rupp-primary);margin-right:6px;"></i>Usage Terms
+                </div>
+                <div class="bk-policy-box">
+                    <ul>
                         <li>Do not damage furniture, equipment, or walls.</li>
                         <li>Turn off AC, lights, and devices before leaving.</li>
                         <li>Keep the room clean and return setup to original state.</li>
                     </ul>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="policyAgreement" name="policy_agreement" required>
-                        <label class="form-check-label" for="policyAgreement">
-                            I have read and agree to the <a href="{% url 'accounts:service' %}#policy" target="_blank">University Room Booking Policy and Terms</a>.
-                        </label>
-                    </div>
+                    <label class="bk-checkbox-row">
+                        <input type="checkbox" id="policyAgreement" name="policy_agreement" required>
+                        <span>I have read and agree to the
+                            <a href="{% url 'accounts:service' %}#policy" target="_blank"
+                               style="color:var(--rupp-primary);font-weight:600;">University Room Booking Policy</a>.
+                        </span>
+                    </label>
                 </div>
 
-                <button type="submit" class="booking-btn" id="bookingBtn" {% if not profile_complete_for_booking or booking_approval_status != 'approved' %}disabled title="Complete verification and wait for admin approval"{% endif %}>
+                <!-- Submit — mirrors Flutter ElevatedButton -->
+                <button type="submit" class="bk-submit-btn" id="bookingBtn"
+                    {% if not profile_complete_for_booking or booking_approval_status != 'approved' %}
+                    disabled title="Complete verification and wait for admin approval"
+                    {% endif %}>
                     <i class="fas fa-calendar-check"></i> Book Now
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Booking Confirmation Modal -->
-    <div id="bookingModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="modal-header">
+    <!-- Confirm Booking Modal — mirrors Flutter AlertDialog -->
+    <div id="bookingModal" class="bk-modal-backdrop" role="dialog">
+        <div class="bk-modal">
+            <div class="bk-modal-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="bk-modal-header">
                 <h3>Confirm Booking</h3>
-                <p>Please review the details of your booking</p>
+                <p>Please review your booking details</p>
             </div>
-            <div class="modal-details">
-                <div class="detail-item">
-                    <span class="detail-label">Building:</span>
-                    <span class="detail-value" id="modalBuilding">-</span>
+            <div class="bk-modal-details">
+                <div class="bk-detail-row">
+                    <span class="bk-detail-label">Room</span>
+                    <span class="bk-detail-value" id="modalRoom">—</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Room:</span>
-                    <span class="detail-value" id="modalRoom">-</span>
+                <div class="bk-detail-row">
+                    <span class="bk-detail-label">Date</span>
+                    <span class="bk-detail-value" id="modalDate">—</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Date:</span>
-                    <span class="detail-value" id="modalDate">-</span>
+                <div class="bk-detail-row">
+                    <span class="bk-detail-label">Time</span>
+                    <span class="bk-detail-value" id="modalTime">—</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Time:</span>
-                    <span class="detail-value" id="modalTime">-</span>
+                <div class="bk-detail-row">
+                    <span class="bk-detail-label">Purpose</span>
+                    <span class="bk-detail-value" id="modalPurpose">—</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Purpose:</span>
-                    <span class="detail-value" id="modalPurpose">-</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Attendees:</span>
-                    <span class="detail-value" id="modalAttendees">-</span>
+                <div class="bk-detail-row">
+                    <span class="bk-detail-label">Attendees</span>
+                    <span class="bk-detail-value" id="modalAttendees">—</span>
                 </div>
             </div>
-            <div class="modal-buttons">
-                <button type="button" class="modal-btn confirm-btn" id="confirmBooking">Confirm</button>
-                <button type="button" class="modal-btn cancel-btn" id="cancelModal">Cancel</button>
+            <div class="bk-modal-actions">
+                <button type="button" class="bk-modal-cancel" id="cancelModal">Cancel</button>
+                <button type="button" class="bk-modal-confirm" id="confirmBooking">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Success Modal -->
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-icon" style="background-color: #e8f5e8;">
-                <i class="fas fa-check-circle" style="color: #2ecc71;"></i>
+    <div id="successModal" class="bk-modal-backdrop" role="dialog">
+        <div class="bk-modal">
+            <div class="bk-modal-icon" style="color:var(--rupp-success);">
+                <i class="fas fa-check-circle"></i>
             </div>
-            <div class="modal-header">
+            <div class="bk-modal-header">
                 <h3>Booking Successful!</h3>
                 <p>Your room has been booked successfully.</p>
             </div>
-            <div class="modal-buttons">
-                <button type="button" class="modal-btn confirm-btn" onclick="window.location.href='{% url 'accounts:booked' %}'">View Bookings</button>
-                <button type="button" class="modal-btn cancel-btn" onclick="closeSuccessModal()">Close</button>
+            <div class="bk-modal-actions">
+                <button type="button" class="bk-modal-cancel" onclick="closeSuccessModal()">Close</button>
+                <button type="button" class="bk-modal-confirm"
+                    onclick="window.location.href='{% url 'accounts:booked' %}'">
+                    <i class="fas fa-list"></i> View Bookings
+                </button>
             </div>
         </div>
     </div>
@@ -244,6 +517,7 @@
             const attendeesInput = document.getElementById('attendeesInput');
             const capacityRangeHint = document.getElementById('capacityRangeHint');
             const timelineContainer = document.getElementById('roomTimeline');
+
 
             function updateAttendeeRange() {
                 const selected = roomSelect.options[roomSelect.selectedIndex];
@@ -267,16 +541,16 @@
 
             function renderTimeline(slots) {
                 if (!slots || !slots.length) {
-                    timelineContainer.innerHTML = '<small class="text-muted">No timeline data available.</small>';
+                    timelineContainer.innerHTML = '<span style="color:var(--rupp-text-muted);font-size:13px;">No timeline data available.</span>';
                     return;
                 }
-
                 const html = slots.map(slot => {
-                    const statusClass = slot.status === 'available' ? 'success' : (slot.status === 'occupied' ? 'warning' : 'secondary');
+                    const cls = slot.status === 'available' ? 'bk-slot-available'
+                              : slot.status === 'occupied'  ? 'bk-slot-occupied'
+                              : 'bk-slot-unavailable';
                     const label = slot.status.charAt(0).toUpperCase() + slot.status.slice(1);
-                    return `<div class="d-flex justify-content-between align-items-center border-bottom py-1"><span>${slot.start} - ${slot.end}</span><span class="badge bg-${statusClass}">${label}</span></div>`;
+                    return `<div class="bk-timeline-slot"><span style="font-size:13px;color:var(--rupp-text-dark);">${slot.start} – ${slot.end}</span><span class="bk-slot-badge ${cls}">${label}</span></div>`;
                 }).join('');
-
                 timelineContainer.innerHTML = html;
             }
 
@@ -413,11 +687,11 @@
 
         // Success modal functions
         function showSuccessModal() {
-            document.getElementById('successModal').style.display = 'block';
+            document.getElementById('successModal').classList.add('open');
         }
 
         function closeSuccessModal() {
-            document.getElementById('successModal').style.display = 'none';
+            document.getElementById('successModal').classList.remove('open');
         }
 
     </script>
@@ -569,5 +843,6 @@
         }
         // Science Building option is now available in the building dropdown above.
     </script>
+    {% include 'includes/chatbot_widget.html' %}
 </body>
 </html>

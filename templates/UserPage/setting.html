@@ -11,22 +11,7 @@
     <script src="{% static 'UserPage/js/setting.js' %}" defer></script>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="logo">
-            <img src="https://upload.wikimedia.org/wikipedia/km/e/ee/Rupp_logo.png?20090803154844" alt="RUPP Logo">
-            <div>Royal University of Phnom Penh</div>
-        </div>
-        <div class="nav">
-            <a href="{% url 'accounts:user_dashboard' %}" class="nav-item">Home</a>
-            <a href="{% url 'accounts:booking' %}" class="nav-item">Booking</a>
-            <a href="{% url 'accounts:booked' %}" class="nav-item">Booked</a>
-            <a href="{% url 'accounts:setting' %}" class="nav-item active">Setting</a>
-            <a href="{% url 'accounts:about_us' %}" class="nav-item">About us</a>
-            <a href="{% url 'accounts:service' %}" class="nav-item">Service</a>
-            <a href="{% url 'accounts:logout' %}" class="nav-item" style="color:#e74c3c;"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-        </div>
-    </div>
+    {% include 'includes/user_navbar.html' %}
 
     <!-- Main Content -->
     <div class="main-container">

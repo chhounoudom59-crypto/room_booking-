@@ -5,6 +5,8 @@ from django.shortcuts import redirect
 from django.urls import include, path
 
 
+from django.views.generic import TemplateView
+
 def redirect_to_login(request):
     """Redirect root URL to login"""
     return redirect('accounts:login')
@@ -13,6 +15,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('booking/', include('booking.urls')),  # Booking app integration
+    path('api-test/', TemplateView.as_view(template_name='api_test.html'), name='api_test'),
     path('', redirect_to_login),
 ]
 

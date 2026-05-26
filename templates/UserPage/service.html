@@ -9,22 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="header">
-        <div class="logo">
-            <img src="https://upload.wikimedia.org/wikipedia/km/e/ee/Rupp_logo.png?20090803154844" alt="RUPP Logo">
-            <div>Royal University of Phnom Penh</div>
-        </div>
-
-        <div class="nav">
-            <a href="{% url 'accounts:user_dashboard' %}" class="nav-item">Home</a>
-            <a href="{% url 'accounts:booking' %}" class="nav-item">Booking</a>
-            <a href="{% url 'accounts:booked' %}" class="nav-item">Booked</a>
-            <a href="{% url 'accounts:setting' %}" class="nav-item">Setting</a>
-            <a href="{% url 'accounts:about_us' %}" class="nav-item">About us</a>
-            <a href="{% url 'accounts:service' %}" class="nav-item active">Service</a>
-            <a href="{% url 'accounts:logout' %}" class="nav-item" style="color:#e74c3c;"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-        </div>
-    </div>
+    {% include 'includes/user_navbar.html' %}
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -435,6 +420,6 @@
         style.innerHTML = `@keyframes shake { 0% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-8px); } 80% { transform: translateX(8px); } 100% { transform: translateX(0); } }`;
         document.head.appendChild(style);
     </script>
-        {% include 'includes/chatbot_widget.html' %}
+    {% include 'includes/chatbot_widget.html' %}
 </body>
 </html>

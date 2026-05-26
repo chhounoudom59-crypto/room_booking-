@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from chatbot.integrations.ai_gateway import get_rag_system
+from chatbot.integrations.ai_gateway import ensure_ai_ready, get_rag_system
 from chatbot.services.booking_service import (
     auto_book,
     build_booking_criteria,
@@ -46,7 +46,7 @@ def chatbot_index(request):
 
 @require_http_methods(["GET"])
 def health_check(request):
-    rag_system, _ = get_rag_system()
+    rag_system, _ = ensure_ai_ready()
     return JsonResponse({
         "status": "ok",
         "rag_initialized": rag_system is not None
@@ -109,13 +109,21 @@ async def chat_endpoint(request):
                 "session_id": session_id
             })
 
-        rag_system, booking_automation = get_rag_system()
+        rag_system, booking_automation = ensure_ai_ready()
 
         if not rag_system:
+            fallback = (
+                "The AI assistant could not start. Check:\n"
+                "1) .env has AI_ENABLED=True\n"
+                "2) Restart Django: python manage.py runserver 8001\n"
+                "3) Optional: run Ollama (ollama serve) for smarter replies\n"
+                "You can still book rooms from the Book page."
+            )
             return JsonResponse({
-                "error": "rag_not_initialized",
-                "reply_text": "System is starting. Try again later."
-            }, status=503)
+                "reply_text": fallback,
+                "session_id": session_id,
+                "rag_mode": "offline",
+            })
 
         # =========================
         # RAG PROCESSING
@@ -212,9 +220,14 @@ async def chat_endpoint(request):
 
     except Exception as e:
         logger.exception(e)
+        err_msg = str(e)
+        if "Hugging Face" in err_msg or "API" in err_msg:
+            hint = err_msg
+        else:
+            hint = "Something went wrong. Please try again or restart the server."
         return JsonResponse({
             "error": "internal_error",
-            "reply_text": "Something went wrong."
+            "reply_text": hint,
         }, status=500)
 
 
@@ -240,11 +253,22 @@ async def confirm_booking(request):
 
     criteria = preview["criteria"]
 
-    _, booking_automation = get_rag_system()
+    _, booking_automation = ensure_ai_ready()
+
+    user = request.user if request.user.is_authenticated else None
+    if user is None:
+        email = optional_string(body, "email") or optional_string(body, "user_email")
+        if email:
+            from accounts.models import User
+            user = User.objects.filter(email=email).first()
+    if user is None:
+        return JsonResponse({
+            "reply_text": "Please log in on the website before confirming a booking.",
+        }, status=401)
 
     result = await auto_book(
         booking_automation,
-        request.user,
+        user,
         criteria
     )
 

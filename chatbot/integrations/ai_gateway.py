@@ -32,6 +32,34 @@ def get_rag_system():
     return _agentic_rag, _booking_automation
 
 
+def ensure_ai_ready():
+    """
+    Initialize AI on first chat request if startup init was skipped or failed.
+    (e.g. AI_ENABLED was off when the server started, then enabled in .env)
+    """
+    global _agentic_rag, _booking_automation
+
+    if _agentic_rag is not None and _booking_automation is not None:
+        return _agentic_rag, _booking_automation
+
+    from django.conf import settings
+
+    if not getattr(settings, "AI_ENABLED", False):
+        logger.warning("AI_ENABLED is False — chatbot AI will not run.")
+        return None, None
+
+    try:
+        logger.info("Lazy-initializing chatbot AI (first request)...")
+        from chatbot.initializer import create_chat_agent
+
+        create_chat_agent()
+        logger.info("Lazy AI initialization complete.")
+    except Exception as e:
+        logger.exception("Lazy AI initialization failed: %s", e)
+
+    return _agentic_rag, _booking_automation
+
+
 def get_vector_store():
     return _vector_store
 

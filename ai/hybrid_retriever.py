@@ -253,27 +253,36 @@ class MultiQueryRetriever:
 
         all_docs: Dict[str, Dict] = {}
 
-        for q in queries:
-            try:
-                docs = self.retriever.retrieve(
-                    query=q,
-                    entities=entities,
-                    intent=intent,
-                    top_k=top_k,
-                )
+        import concurrent.futures
 
-                for doc in docs:
-                    key = doc.get("text", "")[:120]
+        def _fetch(q):
+            return self.retriever.retrieve(
+                query=q,
+                entities=entities,
+                intent=intent,
+                top_k=top_k,
+            )
 
-                    if key in all_docs:
-                        # Boost score for docs appearing in multiple queries
-                        all_docs[key]["score"] = all_docs[key].get("score", 0.0) + doc.get("score", 0.0) * 0.3
-                        all_docs[key]["source"] = "multi_query"
-                    else:
-                        all_docs[key] = doc
+        # Parallel Hybrid Retrieval (each query)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_queries) as executor:
+            future_to_query = {executor.submit(_fetch, q): q for q in queries}
+            
+            for future in concurrent.futures.as_completed(future_to_query):
+                q = future_to_query[future]
+                try:
+                    docs = future.result()
+                    for doc in docs:
+                        key = doc.get("text", "")[:120]
 
-            except Exception as e:
-                logger.error(f"MultiQueryRetriever: query failed '{q[:60]}': {e}")
+                        if key in all_docs:
+                            # Boost score for docs appearing in multiple queries
+                            all_docs[key]["score"] = all_docs[key].get("score", 0.0) + doc.get("score", 0.0) * 0.3
+                            all_docs[key]["source"] = "multi_query"
+                        else:
+                            all_docs[key] = doc
+
+                except Exception as e:
+                    logger.error(f"MultiQueryRetriever: parallel query failed '{q[:60]}': {e}")
 
         merged = list(all_docs.values())
         merged.sort(key=lambda x: x.get("score", 0.0), reverse=True)

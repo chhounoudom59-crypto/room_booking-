@@ -7,6 +7,7 @@ These endpoints allow the Semantic Kernel AI agent to interact with the booking 
 import json
 from datetime import datetime, timedelta
 
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import JsonResponse
 from django.utils import timezone
@@ -72,6 +73,28 @@ def check_consecutive_booking_limit(user, room, start_datetime, end_datetime):
 # Room API Endpoints
 # ============================================
 
+def _room_image_url(room, request):
+    """Absolute image URL for web and mobile clients."""
+    if room.image:
+        return request.build_absolute_uri(room.image.url)
+    return ''
+
+
+def _serialize_room(room, request):
+    return {
+        'id': room.id,
+        'name': room.name,
+        'room_number': room.room_number,
+        'room_type': room.room_type,
+        'capacity': room.capacity,
+        'description': room.description or '',
+        'equipment': room.equipment or '',
+        'is_available': room.is_available,
+        'availability_status': room.availability_status,
+        'image': _room_image_url(room, request),
+    }
+
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_list_rooms(request):
@@ -98,20 +121,7 @@ def api_list_rooms(request):
         if capacity_max:
             rooms = rooms.filter(capacity__lte=int(capacity_max))
 
-        # Serialize rooms
-        rooms_data = []
-        for room in rooms:
-            rooms_data.append({
-                'id': room.id,
-                'name': room.name,
-                'room_number': room.room_number,
-                'room_type': room.room_type,
-                'capacity': room.capacity,
-                'description': room.description,
-                'equipment': room.equipment,
-                'is_available': room.is_available,
-                'availability_status': room.availability_status
-            })
+        rooms_data = [_serialize_room(room, request) for room in rooms]
 
         return JsonResponse({
             'success': True,
@@ -279,6 +289,34 @@ def api_create_booking(request):
                 'error': f'User with email {user_email} not found'
             }, status=404)
 
+        if not user.is_active:
+            return JsonResponse({
+                'success': False,
+                'error': 'Your account is deactivated. Contact an administrator.'
+            }, status=403)
+
+        approval_status = getattr(user, 'booking_approval_status', 'approved')
+        if approval_status != 'approved' and not (user.is_staff or user.is_superuser):
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'Your account is pending admin approval for room booking. '
+                    'Please complete your profile and wait for approval.'
+                )
+            }, status=403)
+
+        agreed_to_policy = data.get(
+            'agreed_to_room_policy',
+            data.get('agreed_to_policy', False),
+        )
+        if isinstance(agreed_to_policy, str):
+            agreed_to_policy = agreed_to_policy.lower() in ('true', '1', 'yes', 'on')
+        if not agreed_to_policy:
+            return JsonResponse({
+                'success': False,
+                'error': 'You must agree to the room usage policy before booking.'
+            }, status=400)
+
         # Get room
         try:
             room = Room.objects.get(id=room_id)
@@ -400,7 +438,7 @@ def api_create_booking(request):
                 'error': 'Room is not available at the requested time. Please choose a different time slot.'
             }, status=400)
 
-        # Create booking
+        # Create booking (agreed_to_room_policy required by Booking.clean())
         booking = Booking.objects.create(
             user=user,
             room=room,
@@ -409,6 +447,7 @@ def api_create_booking(request):
             purpose=purpose,
             attendees=attendees,
             additional_notes=notes,
+            agreed_to_room_policy=True,
             status='confirmed'
         )
 
@@ -433,6 +472,20 @@ def api_create_booking(request):
         return JsonResponse({
             'success': False,
             'error': 'Invalid JSON in request body'
+        }, status=400)
+    except ValidationError as e:
+        messages = []
+        if hasattr(e, 'message_dict'):
+            for field, errs in e.message_dict.items():
+                if isinstance(errs, (list, tuple)):
+                    messages.extend(str(x) for x in errs)
+                else:
+                    messages.append(str(errs))
+        else:
+            messages.append(str(e))
+        return JsonResponse({
+            'success': False,
+            'error': ' '.join(messages) or 'Booking validation failed.'
         }, status=400)
     except Exception as e:
         return JsonResponse({
@@ -677,18 +730,9 @@ def api_search_rooms(request):
             Q(room_type__icontains=query)
         )
 
-        # Serialize results
-        rooms_data = []
-        for room in rooms[:10]:  # Limit to top 10 results
-            rooms_data.append({
-                'id': room.id,
-                'name': room.name,
-                'room_number': room.room_number,
-                'room_type': room.room_type,
-                'capacity': room.capacity,
-                'description': room.description,
-                'equipment': room.equipment
-            })
+        rooms_data = [
+            _serialize_room(room, request) for room in rooms[:10]
+        ]
 
         return JsonResponse({
             'success': True,

@@ -1,0 +1,684 @@
+/* ══════════════════════════════════════════════════════════════
+   GitHub Primer + RuppUi Design System — RUPP Room Booking Web
+   Mirrors:
+     flutter/lib/shared/themes/app_theme.dart  (GitHub Primer)
+     flutter/lib/shared/themes/rupp_ui.dart    (RUPP Mobile UI)
+   ══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap');
+
+/* ── CSS Custom Properties ─────────────────────────────────────
+   Primer tokens (AppTheme) + RuppUi tokens both available      */
+:root {
+  /* ── RuppUi (mobile app tokens) ── */
+  --rupp-primary:        #4A3F69;
+  --rupp-primary-dark:   #3D3456;
+  --rupp-primary-light:  #6B5B95;
+  --rupp-secondary:      #4A90E2;
+  --rupp-canvas:         #F5F6FA;
+  --rupp-card:           #FFFFFF;
+  --rupp-border:         #E8E8EE;
+  --rupp-text-dark:      #2D2D3A;
+  --rupp-text-muted:     #6B6B7B;
+  --rupp-success:        #10B981;
+  --rupp-danger:         #E74C3C;
+  --rupp-hero-start:     rgba(74,63,105,0.87);
+  --rupp-hero-end:       rgba(107,91,149,0.90);
+  --rupp-chat-start:     #667EEA;
+  --rupp-chat-end:       #764BA2;
+
+  /* ── Primer (AppTheme / GitHub Design System) ── */
+  --color-canvas-default:    #F6F8FA;
+  --color-canvas-subtle:     #F6F8FA;
+  --color-canvas-inset:      #F1F4F8;
+  --color-bg-default:        #FFFFFF;
+  --color-border-default:    #D0D7DE;
+  --color-border-muted:      #D8DEE4;
+  --color-fg-default:        #1F2328;
+  --color-fg-muted:          #636C76;
+  --color-fg-subtle:         #9198A1;
+  --color-fg-link:           #0969DA;
+  --color-header-bg:         #24292F;
+  --color-header-border:     #444C56;
+  --color-accent-fg:         #0969DA;
+  --color-accent-emphasis:   #0550AE;
+  --color-accent-subtle:     #DDF4FF;
+  --color-accent-muted:      #B6E3FF;
+  --color-success-fg:        #1A7F37;
+  --color-success-emphasis:  #2DA44E;
+  --color-success-subtle:    #DCFCE7;
+  --color-danger-fg:         #CF222E;
+  --color-danger-subtle:     #FFEBE9;
+  --color-warning-fg:        #9A6700;
+  --color-warning-subtle:    #FFF8C5;
+  --color-attention-fg:      #7D4E00;
+  --color-attention-subtle:  #FFF1E5;
+  /* Backgrounds */
+  --color-canvas-default:    #F6F8FA;
+  --color-canvas-subtle:     #F6F8FA;
+  --color-canvas-inset:      #F1F4F8;
+  --color-bg-default:        #FFFFFF;
+
+  /* Borders */
+  --color-border-default:    #D0D7DE;
+  --color-border-muted:      #D8DEE4;
+
+  /* Text */
+  --color-fg-default:        #1F2328;
+  --color-fg-muted:          #636C76;
+  --color-fg-subtle:         #9198A1;
+  --color-fg-link:           #0969DA;
+
+  /* Header / Brand */
+  --color-header-bg:         #24292F;
+  --color-header-border:     #444C56;
+
+  /* Accent — GitHub Blue */
+  --color-accent-fg:         #0969DA;
+  --color-accent-emphasis:   #0550AE;
+  --color-accent-subtle:     #DDF4FF;
+  --color-accent-muted:      #B6E3FF;
+
+  /* Success — GitHub Green */
+  --color-success-fg:        #1A7F37;
+  --color-success-emphasis:  #2DA44E;
+  --color-success-subtle:    #DCFCE7;
+
+  /* Danger — GitHub Red */
+  --color-danger-fg:         #CF222E;
+  --color-danger-subtle:     #FFEBE9;
+
+  /* Warning — GitHub Yellow */
+  --color-warning-fg:        #9A6700;
+  --color-warning-subtle:    #FFF8C5;
+
+  /* Attention — GitHub Orange */
+  --color-attention-fg:      #7D4E00;
+  --color-attention-subtle:  #FFF1E5;
+
+  /* Radii */
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg: 12px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.10);
+
+  /* Typography */
+  --font-body: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* ── Base Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-fg-default);
+  background-color: var(--color-canvas-default);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Primer Utility Classes ─────────────────────────────────── */
+
+/* Cards */
+.gh-card {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.gh-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Buttons — Primary (Green) */
+.gh-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  background: var(--color-success-emphasis);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.gh-btn-primary:hover {
+  background: #238840;
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.gh-btn-primary:active { transform: translateY(0); }
+
+/* Buttons — Secondary / Ghost */
+.gh-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-fg-default);
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.gh-btn-secondary:hover {
+  background: var(--color-canvas-default);
+  border-color: var(--color-border-muted);
+  color: var(--color-fg-default);
+  text-decoration: none;
+}
+
+/* Buttons — Blue Accent */
+.gh-btn-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  background: var(--color-accent-fg);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.gh-btn-accent:hover {
+  background: var(--color-accent-emphasis);
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Status Badges */
+.gh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 2em;
+  border: 1px solid transparent;
+}
+
+.gh-badge-success {
+  color: var(--color-success-fg);
+  background: var(--color-success-subtle);
+  border-color: rgba(26,127,55,0.2);
+}
+
+.gh-badge-warning {
+  color: var(--color-warning-fg);
+  background: var(--color-warning-subtle);
+  border-color: rgba(154,103,0,0.2);
+}
+
+.gh-badge-danger {
+  color: var(--color-danger-fg);
+  background: var(--color-danger-subtle);
+  border-color: rgba(207,34,46,0.2);
+}
+
+.gh-badge-muted {
+  color: var(--color-fg-muted);
+  background: var(--color-canvas-default);
+  border-color: var(--color-border-default);
+}
+
+/* Form Inputs */
+.gh-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-fg-default);
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.gh-input:focus {
+  border-color: var(--color-accent-fg);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
+.gh-input::placeholder { color: var(--color-fg-subtle); }
+
+.gh-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-fg-default);
+  margin-bottom: 6px;
+}
+
+/* Section Header */
+.gh-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-fg-default);
+  margin-bottom: 4px;
+}
+
+.gh-section-underline {
+  width: 48px;
+  height: 3px;
+  background: var(--color-accent-fg);
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+
+/* Divider */
+.gh-divider {
+  height: 1px;
+  background: var(--color-border-default);
+  margin: 16px 0;
+}
+
+/* ── Hero Section ───────────────────────────────────────────── */
+.gh-hero {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-header-bg);
+}
+
+.gh-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.45;
+}
+
+.gh-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #24292F 0%, #161B22 100%);
+  opacity: 0.75;
+}
+
+.gh-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.gh-hero-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+}
+
+.gh-hero-subtitle {
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.75);
+}
+
+/* ── Room Cards ─────────────────────────────────────────────── */
+.gh-room-card {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: var(--shadow-card);
+}
+
+.gh-room-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.gh-room-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  background: var(--color-canvas-inset);
+}
+
+.gh-room-img-placeholder {
+  width: 100%;
+  height: 180px;
+  background: var(--color-canvas-inset);
+  border-bottom: 1px solid var(--color-border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg-subtle);
+  font-size: 13px;
+  gap: 6px;
+}
+
+.gh-room-body {
+  padding: 16px;
+}
+
+.gh-room-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-fg-default);
+  margin-bottom: 6px;
+}
+
+.gh-room-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-fg-muted);
+  margin-bottom: 12px;
+}
+
+.gh-room-meta i { color: var(--color-fg-subtle); }
+
+.gh-room-footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-muted);
+}
+
+.gh-room-footer .gh-btn-secondary,
+.gh-room-footer .gh-btn-primary {
+  flex: 1;
+  justify-content: center;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+/* ── Feature Cards (Booking Calendar / AI) ──────────────────── */
+.gh-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 880px;
+  margin: 32px auto;
+  padding: 0 20px;
+}
+
+.gh-feature-card {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.gh-feature-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.gh-feature-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #F0EEF6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  font-size: 28px;
+  color: var(--color-accent-fg);
+}
+
+.gh-feature-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-fg-default);
+  margin-bottom: 8px;
+}
+
+.gh-feature-desc {
+  font-size: 14px;
+  color: var(--color-fg-muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+/* ── Filter Card ────────────────────────────────────────────── */
+.gh-filter-card {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 24px;
+}
+
+.gh-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 500px) { .gh-filter-grid { grid-template-columns: 1fr; } }
+
+.gh-filter-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Rooms Grid ─────────────────────────────────────────────── */
+.gh-rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+/* ── Map Section ────────────────────────────────────────────── */
+.gh-map-section {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  margin: 32px 0;
+}
+
+.gh-map-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.gh-map-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-fg-default);
+  margin-bottom: 2px;
+}
+
+.gh-map-header p {
+  font-size: 13px;
+  color: var(--color-fg-muted);
+}
+
+.gh-map-embed {
+  height: 360px;
+}
+
+.gh-map-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* ── Modal ──────────────────────────────────────────────────── */
+.gh-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+
+.gh-modal-backdrop.open { display: flex; }
+
+.gh-modal {
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  width: min(560px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: gh-modal-in 0.2s ease;
+}
+
+@keyframes gh-modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.gh-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.gh-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-fg-default);
+}
+
+.gh-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+
+.gh-modal-close:hover {
+  background: var(--color-canvas-default);
+  color: var(--color-fg-default);
+}
+
+.gh-modal-body { padding: 20px; }
+
+.gh-modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* ── Toast ──────────────────────────────────────────────────── */
+.gh-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--color-header-bg);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 9999;
+  white-space: nowrap;
+}
+
+.gh-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Announcements ──────────────────────────────────────────── */
+.gh-alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.gh-alert-info    { background: var(--color-accent-subtle);  border-color: var(--color-accent-muted);   color: var(--color-accent-emphasis); }
+.gh-alert-success { background: var(--color-success-subtle); border-color: rgba(26,127,55,0.3);          color: var(--color-success-fg); }
+.gh-alert-warning { background: var(--color-warning-subtle); border-color: rgba(154,103,0,0.3);          color: var(--color-warning-fg); }
+.gh-alert-danger  { background: var(--color-danger-subtle);  border-color: rgba(207,34,46,0.3);          color: var(--color-danger-fg); }
+
+/* ── No Results ─────────────────────────────────────────────── */
+.gh-no-results {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--color-fg-muted);
+}
+
+.gh-no-results-icon { font-size: 40px; margin-bottom: 12px; }
+.gh-no-results h3   { font-size: 16px; font-weight: 600; color: var(--color-fg-default); margin-bottom: 6px; }
+.gh-no-results p    { font-size: 14px; }
+
+/* ── Container ──────────────────────────────────────────────── */
+.gh-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 600px) { .gh-container { padding: 0 12px; } }

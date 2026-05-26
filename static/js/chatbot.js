@@ -1,4 +1,9 @@
-// Emoji categories for the picker
+/* Prevent double-load errors if chatbot.js is included twice */
+(function () {
+if (window.__CHATBOT_JS_LOADED__) return;
+window.__CHATBOT_JS_LOADED__ = true;
+
+/* Emoji categories for the picker */
 const emojiCategories = {
     'Smileys': ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴'],
     'Gestures': ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '💪', '🦵', '🦶', '👂', '👃', '🧠', '🦷', '🦴', '👀', '👁️', '👅', '👄'],
@@ -12,31 +17,24 @@ const emojiCategories = {
 
 class ChatbotWidget {
     constructor() {
+        if (document.getElementById('chatbot-toggle')) {
+            return;
+        }
+
         this.isOpen = false;
         this.messages = [];
         this.chatbotApiUrl = '/chatbot';
         this.userEmail = this.getUserEmail();
         this.sessionId = this.loadSessionId();
-        
-        try { 
-            window.chatbotInitialized = window.chatbotInitialized || false; 
-        } catch (e) {
-            console.error('Failed to set chatbotInitialized flag:', e);
-        }
+        this._boundQuickActionHandler = this._onQuickActionClick.bind(this);
         
         this.init();
+        window.chatbotInitialized = true;
     }
     
     init() {
         this.createWidget();
         this.attachEventListeners();
-        
-        try { 
-            this.showQuickActions(); 
-        } catch (e) {
-            console.error('Failed to show quick actions:', e);
-        }
-        
         this.greetUser();
         
         try {
@@ -159,59 +157,10 @@ class ChatbotWidget {
             }
         });
 
-        // Event delegation for quick-action buttons
-        const chatWindow = document.getElementById('chatbot-window');
-        if (chatWindow) {
-            chatWindow.addEventListener('click', (e) => {
-                const btn = e.target.closest('.inline-quick-action, .quick-action-btn');
-                if (btn && btn.dataset.action) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.handleQuickAction(btn.dataset.action, btn.dataset);
-                }
-            });
+        const chatContainer = document.querySelector('.chatbot-container');
+        if (chatContainer) {
+            chatContainer.addEventListener('click', this._boundQuickActionHandler);
         }
-
-        // Global document-level handler for dynamically inserted buttons
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn || !btn.dataset.action) return;
-            
-            console.log('Button clicked with action:', btn.dataset.action);
-            
-            const chatContainer = document.querySelector('.chatbot-container');
-            if (!chatContainer || !chatContainer.contains(btn)) {
-                console.log('Button not in chat container');
-                return;
-            }
-
-            // Check if button is disabled
-            if (btn.disabled) {
-                console.log('Button is disabled');
-                return;
-            }
-
-            console.log('Proceeding with action:', btn.dataset.action);
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const action = btn.dataset.action;
-            
-            // Handle confirm_booking
-            if (action === 'confirm_booking') {
-                this.handleConfirmBooking(btn);
-                return;
-            }
-
-            // Handle navigate
-            if (action === 'navigate') {
-                const href = btn.dataset.href || btn.getAttribute('href');
-                if (href) {
-                    setTimeout(() => { window.location.href = href; }, 250);
-                }
-                return;
-            }
-        }.bind(this)); // Bind 'this' context
 
         // Emoji picker logic
         emojiBtn.addEventListener('click', (e) => {
@@ -326,6 +275,35 @@ class ChatbotWidget {
         searchInput.focus();
     }
     
+    _onQuickActionClick(e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn || !btn.dataset.action || btn.disabled) return;
+
+        const chatContainer = document.querySelector('.chatbot-container');
+        if (!chatContainer || !chatContainer.contains(btn)) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const action = btn.dataset.action;
+        const quickActions = ['browse', 'book', 'mybookings', 'help'];
+
+        if (quickActions.includes(action)) {
+            this.handleQuickAction(action, btn.dataset);
+            return;
+        }
+        if (action === 'confirm_booking') {
+            this.handleConfirmBooking(btn);
+            return;
+        }
+        if (action === 'navigate') {
+            const href = btn.dataset.href || btn.getAttribute('href');
+            if (href) {
+                setTimeout(() => { window.location.href = href; }, 250);
+            }
+        }
+    }
+
     toggleChat() {
         this.isOpen = !this.isOpen;
         const window = document.getElementById('chatbot-window');
@@ -463,6 +441,7 @@ class ChatbotWidget {
         try {
             const response = await fetch(`${this.chatbotApiUrl}/confirm_booking/`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCsrfToken()
@@ -652,6 +631,7 @@ class ChatbotWidget {
                     this.showTypingIndicator();
                     const resp = await fetch(`${this.chatbotApiUrl}/chat/`, {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: { 
                             'Content-Type': 'application/json', 
                             'X-CSRFToken': this.getCsrfToken() 
@@ -692,7 +672,11 @@ class ChatbotWidget {
     }
     
     formatMessage(text) {
-        let formatted = text
+        let formatted = String(text)
+            .replace(/^### (.*)$/gm, '<strong>$1</strong>')
+            .replace(/^## (.*)$/gm, '<strong>$1</strong>')
+            .replace(/^# (.*)$/gm, '<strong>$1</strong>')
+            .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0;">')
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -757,6 +741,7 @@ class ChatbotWidget {
         try {
             const response = await fetch(`${this.chatbotApiUrl}/chat/`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCsrfToken()
@@ -776,14 +761,15 @@ class ChatbotWidget {
             }
 
             if (response.ok) {
-                const replyText = data.reply_text || data.reply || '';
+                const replyText = data.reply_text || data.reply || data.message || '';
                 const replyHtml = data.reply_html || null;
                 
-                // If we have HTML content, render it as HTML
                 if (replyHtml) {
                     this.addMessage(replyHtml, 'bot', true);
                 } else if (replyText) {
                     this.addMessage(replyText, 'bot');
+                } else {
+                    this.addMessage('I received your message but had no reply. Please try again.', 'bot');
                 }
                 
                 if (data.slots) this.renderSlotSummary(data.slots, data.slot_confidences);
@@ -792,7 +778,7 @@ class ChatbotWidget {
                     this.renderActions(data.actions);
                 }
             } else {
-                const err = data.error || JSON.stringify(data);
+                const err = data.error || data.reply_text || JSON.stringify(data);
                 this.addMessage(`Sorry, I encountered an error: ${err}`, 'bot');
             }
             
@@ -816,6 +802,7 @@ class ChatbotWidget {
         try {
             const response = await fetch(`${this.chatbotApiUrl}/chat/`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: { 
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCsrfToken()
@@ -835,14 +822,15 @@ class ChatbotWidget {
             }
 
             if (response.ok) {
-                const replyText = data.reply_text || data.reply || '';
+                const replyText = data.reply_text || data.reply || data.message || '';
                 const replyHtml = data.reply_html || null;
                 
-                // If we have HTML content, render it as HTML
                 if (replyHtml) {
                     this.addMessage(replyHtml, 'bot', true);
                 } else if (replyText) {
                     this.addMessage(replyText, 'bot');
+                } else {
+                    this.addMessage('No response from assistant. Please try again.', 'bot');
                 }
                 
                 if (data.slots) this.renderSlotSummary(data.slots, data.slot_confidences);
@@ -850,14 +838,14 @@ class ChatbotWidget {
 
                 return replyText || replyHtml;
             } else {
-                const err = data.error || JSON.stringify(data);
+                const err = data.error || data.reply_text || JSON.stringify(data);
                 this.addMessage(`Sorry, I encountered an error: ${err}`, 'bot');
                 throw new Error(err);
             }
         } catch (error) {
             console.error('Quick query error:', error);
             this.hideTypingIndicator();
-            this.addMessage('Sorry, I could not reach the chatbot service right now.', 'bot');
+            this.addMessage('Sorry, I could not reach the chatbot service. Is Django running on port 8001?', 'bot');
             throw error;
         }
     }
@@ -879,33 +867,35 @@ class ChatbotWidget {
     }
 }
 
-// Initialize chatbot when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const initWidget = () => {
-        try {
-            if (!window.chatbotInitialized) {
-                new ChatbotWidget();
-                window.chatbotInitialized = true;
-            }
-        } catch (err) {
-            console.error('Failed to initialize ChatbotWidget:', err);
+/* Expose class globally for widget template initializer */
+window.ChatbotWidget = ChatbotWidget;
+
+/** Open chat from "Chat Now" cards — waits for widget if needed */
+window.openChatbot = function openChatbot() {
+    function tryOpen(attemptsLeft) {
+        const toggle = document.getElementById('chatbot-toggle');
+        if (toggle) {
+            toggle.click();
+            return;
         }
-    };
-
-    if (!window.twemoji) {
-        const script = document.createElement('script');
-        script.src = 'https://twemoji.maxcdn.com/v/latest/twemoji.min.js';
-        script.onload = () => initWidget();
-        script.onerror = () => {
-            console.warn('Twemoji failed to load — initializing widget without it.');
-            initWidget();
-        };
-        document.head.appendChild(script);
-
-        setTimeout(() => {
-            if (!window.chatbotInitialized) initWidget();
-        }, 1500);
-    } else {
-        initWidget();
+        if (typeof window.ChatbotWidget !== 'undefined' && !window.chatbotInitialized) {
+            try {
+                new window.ChatbotWidget();
+                window.chatbotInitialized = true;
+            } catch (e) {
+                console.error('[chatbot] openChatbot init failed:', e);
+            }
+            setTimeout(() => tryOpen(20), 50);
+            return;
+        }
+        if (attemptsLeft > 0) {
+            setTimeout(() => tryOpen(attemptsLeft - 1), 50);
+        } else {
+            console.error('[chatbot] openChatbot: toggle button not found');
+            alert('Chat is still loading. Look for the purple chat button at the bottom-right of the page.');
+        }
     }
-});
+    tryOpen(40);
+};
+
+})();

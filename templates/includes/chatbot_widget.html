@@ -1,13 +1,36 @@
 {% load static %}
-<!-- Chatbot CSS -->
-<link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
-
-<!-- Font Awesome for icons (if not already included) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<!-- Hidden element to pass user email to JavaScript -->
+{# Floating AI chatbot — include once per page, before </body> #}
 {% if user.is_authenticated %}
-<div data-user-email="{{ user.email }}" style="display: none;"></div>
+<link rel="stylesheet" href="{% static 'css/chatbot.css' %}?v=6">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<div data-user-email="{{ user.email }}" style="display:none"></div>
+<script src="{% static 'js/chatbot.js' %}?v=6"></script>
+<script>
+(function () {
+    function bootChatbot(attemptsLeft) {
+        if (window.chatbotInitialized || document.getElementById('chatbot-toggle')) {
+            window.chatbotInitialized = true;
+            return;
+        }
+        if (typeof window.ChatbotWidget !== 'undefined') {
+            try {
+                new window.ChatbotWidget();
+            } catch (e) {
+                console.error('[chatbot] Init failed:', e);
+            }
+            return;
+        }
+        if (attemptsLeft > 0) {
+            setTimeout(function () { bootChatbot(attemptsLeft - 1); }, 50);
+        } else {
+            console.error('[chatbot] ChatbotWidget not loaded. Check /static/js/chatbot.js');
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { bootChatbot(40); });
+    } else {
+        bootChatbot(40);
+    }
+})();
+</script>
 {% endif %}
-
-<script src="{% static 'js/chatbot.js' %}"></script>

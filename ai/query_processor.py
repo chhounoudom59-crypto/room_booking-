@@ -212,10 +212,28 @@ class QueryProcessor:
         return [q.strip() for q in re.split(r"\band\b", query) if q.strip()]
 
     # =========================
-    # EXPANSION
+    # EXPANSION (LLM Query Rewriter)
     # =========================
     def expand_query(self, query: str, entities: Dict) -> List[str]:
 
+        # LLM Query Rewriter (as per flowchart)
+        if self.llm_client and hasattr(self.llm_client, "generate"):
+            try:
+                prompt = (
+                    "Rewrite the following user query into 3 distinct variations "
+                    "that might better match documents in a vector database. "
+                    "Output only the queries, one per line, without numbers.\n\n"
+                    f"Query: {query}"
+                )
+                response = self.llm_client.generate(prompt)
+                if response:
+                    variants = [v.strip("- 1234567890.\n") for v in response.split("\n") if v.strip()]
+                    if variants:
+                        return [query] + variants[:3]
+            except Exception as e:
+                logger.warning(f"LLM Query Rewriter failed: {e}")
+
+        # Fallback to synonym expansion
         expanded = [query]
 
         synonyms = {
@@ -237,18 +255,24 @@ class QueryProcessor:
     # =========================
     # COMPLEXITY
     # =========================
-    def _complexity(self, query: str, entities: Dict, sub_queries: List[str]) -> int:
+    def _complexity(self, query: str, entities: Dict, sub_queries: List[str]) -> float:
 
-        score = 1
+        score = 1.0
 
         if len(entities) > 3:
-            score += 1
+            score += 1.0
+        elif len(entities) >= 1:
+            score += 0.5
+            
         if len(query.split()) > 15:
-            score += 1
+            score += 1.0
+        elif len(query.split()) >= 8:
+            score += 0.5
+            
         if len(sub_queries) > 1:
-            score += 1
+            score += 1.0
 
-        return min(score, 5)
+        return min(score, 5.0)
 
 
 # =========================

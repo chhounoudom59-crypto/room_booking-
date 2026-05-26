@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate, get_user_model
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -62,6 +64,70 @@ def mobile_login(request):
         return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def mobile_register(request):
+    """
+    Mobile registration endpoint.
+    POST /accounts/api/register/
+    Body: { "email": "...", "password": "...", "first_name": "...", "last_name": "..." }
+    """
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+
+        if not email or not password:
+            return JsonResponse({'success': False, 'error': 'Email and password are required.'}, status=400)
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return JsonResponse({'success': False, 'error': 'Invalid email format.'}, status=400)
+
+        if len(password) < 8:
+            return JsonResponse({'success': False, 'error': 'Password must be at least 8 characters.'}, status=400)
+
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'success': False, 'error': 'An account with this email already exists.'}, status=409)
+
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Account created successfully. Please wait for admin approval before booking rooms.',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            }
+        }, status=201)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON body.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def mobile_logout(request):
+    """
+    Mobile logout endpoint (token-based: client simply discards the token).
+    POST /accounts/api/logout/
+    Body: { "user_id": 1 }  (optional – for future server-side token invalidation)
+    """
+    return JsonResponse({'success': True, 'message': 'Logged out successfully.'})
 
 
 @csrf_exempt

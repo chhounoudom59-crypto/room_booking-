@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Testing Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --border-color: #30363d;
+            --primary-color: #58a6ff;
+            --success-color: #3fb950;
+            --danger-color: #f85149;
+            --accent-color: #8957e5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .endpoint-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .method-badge {
+            background-color: var(--primary-color);
+            color: #000;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+        
+        .method-badge.post { background-color: var(--success-color); color: #fff; }
+        .method-badge.get { background-color: var(--primary-color); color: #fff; }
+
+        .url-text {
+            font-family: monospace;
+            font-size: 16px;
+            color: var(--accent-color);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"], textarea {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 6px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 120px;
+        }
+
+        button {
+            background-color: #238636;
+            color: white;
+            border: 1px solid rgba(240,246,252,0.1);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background-color: #2ea043;
+        }
+
+        .response-area {
+            margin-top: 15px;
+            background-color: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+
+        pre {
+            margin: 0;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .flex-row > .input-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Flutter Mobile API Tester</h1>
+
+        <!-- Status Bar -->
+        <div class="endpoint-card" style="padding:12px 20px; margin-bottom:15px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <span style="font-size:13px; color:var(--text-color);">Auth Token:</span>
+            <code id="status-token" style="flex:1; font-family:monospace; font-size:12px; color:var(--accent-color); word-break:break-all;">— not logged in —</code>
+            <button onclick="clearAll()" style="background:#6e40c9; padding:5px 12px; font-size:12px;">Clear All</button>
+        </div>
+
+        <!-- 1. Mobile Login -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge post">POST</span>
+                <span class="url-text">/accounts/api/login/</span>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" value="dse_admin@rupp.edu.kh">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" value="Dseadmin123!">
+                </div>
+            </div>
+            <button onclick="testLogin()">Test Login</button>
+            <div class="response-area" id="login-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+        <!-- 2. Mobile Register -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge post">POST</span>
+                <span class="url-text">/accounts/api/register/</span>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>First Name</label>
+                    <input type="text" id="reg-first" value="Test">
+                </div>
+                <div class="input-group">
+                    <label>Last Name</label>
+                    <input type="text" id="reg-last" value="User">
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="reg-email" value="test.user@rupp.edu.kh">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-password" value="Test1234!">
+                </div>
+            </div>
+            <button onclick="testRegister()">Test Register</button>
+            <div class="response-area" id="register-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+        <!-- 3. Get Rooms -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge get">GET</span>
+                <span class="url-text">/booking/api/rooms/</span>
+            </div>
+            <button onclick="testGetRooms()">Test Get Rooms</button>
+            <div class="response-area" id="rooms-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+        <!-- 4. Check Room Availability -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge get">GET</span>
+                <span class="url-text">/booking/api/rooms/availability/</span>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>Room ID</label>
+                    <input type="text" id="avail-room-id" value="1">
+                </div>
+                <div class="input-group">
+                    <label>Date (YYYY-MM-DD)</label>
+                    <input type="text" id="avail-date" value="2026-05-25">
+                </div>
+                <div class="input-group">
+                    <label>Start Time (HH:MM)</label>
+                    <input type="text" id="avail-start" value="10:00">
+                </div>
+                <div class="input-group">
+                    <label>End Time (HH:MM)</label>
+                    <input type="text" id="avail-end" value="12:00">
+                </div>
+            </div>
+            <button onclick="testAvailability()">Test Availability</button>
+            <div class="response-area" id="avail-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+        <!-- 5. Get User Bookings -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge get">GET</span>
+                <span class="url-text">/booking/api/bookings/</span>
+            </div>
+            <div class="input-group">
+                <label>User Email</label>
+                <input type="email" id="bookings-email" value="dse_admin@rupp.edu.kh">
+            </div>
+            <button onclick="testGetBookings()">Test Get User Bookings</button>
+            <div class="response-area" id="bookings-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+        <!-- 6. Create Booking -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge post">POST</span>
+                <span class="url-text">/booking/api/bookings/create/</span>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>User Email</label>
+                    <input type="email" id="create-email" value="dse_admin@rupp.edu.kh">
+                </div>
+                <div class="input-group">
+                    <label>Room ID</label>
+                    <input type="text" id="create-room-id" value="1">
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>Date (YYYY-MM-DD)</label>
+                    <input type="text" id="create-date" value="2026-05-25">
+                </div>
+                <div class="input-group">
+                    <label>Start Time (HH:MM)</label>
+                    <input type="text" id="create-start" value="10:00">
+                </div>
+                <div class="input-group">
+                    <label>End Time (HH:MM)</label>
+                    <input type="text" id="create-end" value="11:00">
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>Purpose</label>
+                    <input type="text" id="create-purpose" value="Team meeting">
+                </div>
+                <div class="input-group">
+                    <label>Attendees</label>
+                    <input type="text" id="create-attendees" value="5">
+                </div>
+            </div>
+            <button onclick="testCreateBooking()">Test Create Booking</button>
+            <div class="response-area" id="create-booking-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+        <!-- 7. Search Rooms -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method-badge get">GET</span>
+                <span class="url-text">/booking/api/rooms/search/?query=...</span>
+            </div>
+            <div class="input-group">
+                <label>Query</label>
+                <input type="text" id="search-query" value="Projector">
+            </div>
+            <button onclick="testSearchRooms()">Test Search Rooms</button>
+            <div class="response-area" id="search-response"><pre>Response will appear here...</pre></div>
+        </div>
+
+    </div>
+
+
+    <script>
+        const formatJSON = (data) => JSON.stringify(data, null, 2);
+        let _token = null;
+
+        async function doRequest(url, method, body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { status: response.status, ok: response.ok, data };
+            } catch (err) {
+                return { status: 'Error', ok: false, data: err.toString() };
+            }
+        }
+
+        function clearAll() {
+            document.querySelectorAll('.response-area').forEach(el => {
+                el.innerHTML = '<pre>Response will appear here...</pre>';
+            });
+            _token = null;
+            document.getElementById('status-token').textContent = '— not logged in —';
+        }
+
+        async function testLogin() {
+            const el = document.getElementById('login-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const body = {
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
+            };
+            const res = await doRequest('/accounts/api/login/', 'POST', body);
+            if (res.ok && res.data.success) {
+                _token = res.data.token;
+                document.getElementById('status-token').textContent = `token=${_token}  |  user_id=${res.data.user?.id}  |  email=${res.data.user?.email}`;
+            }
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+
+        async function testRegister() {
+            const el = document.getElementById('register-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const body = {
+                email: document.getElementById('reg-email').value,
+                password: document.getElementById('reg-password').value,
+                first_name: document.getElementById('reg-first').value,
+                last_name: document.getElementById('reg-last').value,
+            };
+            const res = await doRequest('/accounts/api/register/', 'POST', body);
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+
+        async function testGetRooms() {
+            const el = document.getElementById('rooms-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const res = await doRequest('/booking/api/rooms/', 'GET');
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+
+        async function testAvailability() {
+            const el = document.getElementById('avail-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const params = new URLSearchParams({
+                room_id: document.getElementById('avail-room-id').value,
+                date: document.getElementById('avail-date').value,
+                start_time: document.getElementById('avail-start').value,
+                end_time: document.getElementById('avail-end').value
+            });
+            const res = await doRequest(`/booking/api/rooms/availability/?${params.toString()}`, 'GET');
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+
+        async function testGetBookings() {
+            const el = document.getElementById('bookings-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const params = new URLSearchParams({
+                user_email: document.getElementById('bookings-email').value
+            });
+            const res = await doRequest(`/booking/api/bookings/?${params.toString()}`, 'GET');
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+
+        async function testCreateBooking() {
+            const el = document.getElementById('create-booking-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const body = {
+                user_email: document.getElementById('create-email').value,
+                room_id: parseInt(document.getElementById('create-room-id').value),
+                date: document.getElementById('create-date').value,
+                start_time: document.getElementById('create-start').value,
+                end_time: document.getElementById('create-end').value,
+                purpose: document.getElementById('create-purpose').value,
+                attendees: parseInt(document.getElementById('create-attendees').value),
+            };
+            const res = await doRequest('/booking/api/bookings/create/', 'POST', body);
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+
+        async function testSearchRooms() {
+            const el = document.getElementById('search-response');
+            el.innerHTML = '<pre>Loading...</pre>';
+            const params = new URLSearchParams({
+                query: document.getElementById('search-query').value
+            });
+            const res = await doRequest(`/booking/api/rooms/search/?${params.toString()}`, 'GET');
+            el.innerHTML = `<pre style="color: ${res.ok ? 'inherit' : 'var(--danger-color)'}">${formatJSON(res.data)}</pre>`;
+        }
+    </script>
+</body>
+</html>
+

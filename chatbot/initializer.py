@@ -17,15 +17,16 @@ def create_chat_agent():
     from django.conf import settings
 
     from ai.booking_automation import BookingAutomation
-    from ai.kernel_config import create_kernel_ollama
+    from ai.kernel_config import create_kernel
     from ai.plugins.room_booking_plugin import RoomBookingPlugin
     from booking.models import Booking, BookingRule, Room
 
     # --- Init AI components ---
     booking_automation = BookingAutomation(Room, Booking, BookingRule)
 
-    model_name = getattr(settings, "OLLAMA_MODEL", "gemma3:1b")
-    kernel = create_kernel_ollama(model=model_name)
+    provider = getattr(settings, "LLM_PROVIDER", "ollama")
+    kernel = create_kernel(provider=provider)
+    logger.info("Chat kernel provider: %s", provider)
 
     room_plugin = RoomBookingPlugin(Room, Booking, booking_automation)
     kernel.add_plugin(room_plugin, plugin_name="RoomBooking")

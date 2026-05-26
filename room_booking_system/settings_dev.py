@@ -4,11 +4,11 @@ from .settings import *
 
 # Development environment settings
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*.ngrok.io']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '*.ngrok.io']
 
 # Enable all development tools
 try:
-    import importlib
+    import importlib.util
     if importlib.util.find_spec('django_extensions') is not None:
         INSTALLED_APPS += ['django_extensions']
 except Exception:

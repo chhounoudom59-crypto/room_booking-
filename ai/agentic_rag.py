@@ -99,7 +99,7 @@ class AgenticRAG:
         logger.info("Step 2: Retrieval...")
 
         # Decide whether to use multi-query based on complexity
-        use_multi_query = self.enable_multi_query and complexity >= 3
+        use_multi_query = self.enable_multi_query and complexity >= 2.5
 
         if use_multi_query:
             logger.info(f"  Using multi-query retrieval with {len(expanded_queries)} variations")

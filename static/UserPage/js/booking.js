@@ -1,21 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    initializeBooki    .then(data => {
-        if (data.rooms) {
-            data.rooms.forEach(room => {
-                const option = document.createElement('option');
-                option.value = room.id;
-                option.textContent = `${room.room_number} - ${room.name} (${room.capacity} people)`;
-                roomSelect.appendChild(option);
-            });
-            
-            // Check if there's a pending room selection for autofill
-            if (window.pendingRoomSelection) {
-                roomSelect.value = window.pendingRoomSelection;
-                roomSelect.dispatchEvent(new Event('change'));
-                window.pendingRoomSelection = null; // Clear the pending selection
-            }
-        }
-    })
+    initializeBookingPage();
 });
 
 // Helper function to get CSRF token

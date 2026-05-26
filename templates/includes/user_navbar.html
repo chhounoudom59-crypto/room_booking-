@@ -1,0 +1,123 @@
+{% load static %}
+<!-- ── Responsive User Navbar ─────────────────────────────────────── -->
+<link rel="stylesheet" href="{% static 'UserPage/css/navbar.css' %}">
+
+<header class="gh-header">
+    <div class="gh-header-inner">
+        <!-- Logo -->
+        <a href="{% url 'accounts:user_dashboard' %}" class="gh-logo-link">
+            <img src="https://upload.wikimedia.org/wikipedia/km/e/ee/Rupp_logo.png?20090803154844" alt="RUPP" class="gh-logo-img">
+            <div class="gh-logo-text">
+                <span class="gh-logo-title">RUPP</span>
+                <span class="gh-logo-sub">Room Booking</span>
+            </div>
+        </a>
+
+        <!-- Desktop Nav -->
+        <nav class="gh-nav" id="gh-nav">
+            <a href="{% url 'accounts:user_dashboard' %}" class="gh-nav-link {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="{% url 'accounts:booking' %}" class="gh-nav-link {% if request.resolver_match.url_name == 'booking' or request.resolver_match.url_name == 'create_booking' %}active{% endif %}">
+                <i class="fas fa-calendar-plus"></i> Book
+            </a>
+            <a href="{% url 'accounts:booked' %}" class="gh-nav-link {% if request.resolver_match.url_name == 'booked' %}active{% endif %}">
+                <i class="fas fa-calendar-check"></i> My Bookings
+            </a>
+            <a href="{% url 'accounts:setting' %}" class="gh-nav-link {% if request.resolver_match.url_name == 'setting' %}active{% endif %}">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            <a href="{% url 'accounts:about_us' %}" class="gh-nav-link {% if request.resolver_match.url_name == 'about_us' %}active{% endif %}">
+                <i class="fas fa-info-circle"></i> About
+            </a>
+            <a href="{% url 'accounts:service' %}" class="gh-nav-link {% if request.resolver_match.url_name == 'service' %}active{% endif %}">
+                <i class="fas fa-concierge-bell"></i> Service
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="gh-nav-link gh-nav-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </nav>
+
+        <!-- Hamburger -->
+        <button class="gh-hamburger" id="gh-hamburger" aria-label="Toggle menu" aria-expanded="false">
+            <span class="gh-bar"></span>
+            <span class="gh-bar"></span>
+            <span class="gh-bar"></span>
+        </button>
+    </div>
+</header>
+
+<!-- Mobile Overlay -->
+<div class="gh-overlay" id="gh-overlay"></div>
+
+<!-- Mobile Drawer -->
+<div class="gh-drawer" id="gh-drawer">
+    <div class="gh-drawer-header">
+        <img src="https://upload.wikimedia.org/wikipedia/km/e/ee/Rupp_logo.png?20090803154844" alt="RUPP" style="height:36px;">
+        <span style="font-weight:700; font-size:1rem; color:#1f2328;">RUPP Room Booking</span>
+        <button class="gh-drawer-close" id="gh-drawer-close" aria-label="Close menu">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <nav class="gh-drawer-nav">
+        <a href="{% url 'accounts:user_dashboard' %}" class="gh-drawer-link {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">
+            <i class="fas fa-home"></i> Home
+        </a>
+        <a href="{% url 'accounts:booking' %}" class="gh-drawer-link {% if request.resolver_match.url_name == 'booking' or request.resolver_match.url_name == 'create_booking' %}active{% endif %}">
+            <i class="fas fa-calendar-plus"></i> Book a Room
+        </a>
+        <a href="{% url 'accounts:booked' %}" class="gh-drawer-link {% if request.resolver_match.url_name == 'booked' %}active{% endif %}">
+            <i class="fas fa-calendar-check"></i> My Bookings
+        </a>
+        <a href="{% url 'accounts:setting' %}" class="gh-drawer-link {% if request.resolver_match.url_name == 'setting' %}active{% endif %}">
+            <i class="fas fa-cog"></i> Settings
+        </a>
+        <a href="{% url 'accounts:about_us' %}" class="gh-drawer-link {% if request.resolver_match.url_name == 'about_us' %}active{% endif %}">
+            <i class="fas fa-info-circle"></i> About Us
+        </a>
+        <a href="{% url 'accounts:service' %}" class="gh-drawer-link {% if request.resolver_match.url_name == 'service' %}active{% endif %}">
+            <i class="fas fa-concierge-bell"></i> Service
+        </a>
+        <div class="gh-drawer-divider"></div>
+        <a href="{% url 'accounts:logout' %}" class="gh-drawer-link gh-drawer-logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </nav>
+</div>
+
+<script>
+(function() {
+    const hamburger = document.getElementById('gh-hamburger');
+    const drawer = document.getElementById('gh-drawer');
+    const overlay = document.getElementById('gh-overlay');
+    const closeBtn = document.getElementById('gh-drawer-close');
+
+    function openDrawer() {
+        drawer.classList.add('open');
+        overlay.classList.add('visible');
+        hamburger.setAttribute('aria-expanded', 'true');
+        hamburger.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('visible');
+        hamburger.setAttribute('aria-expanded', 'false');
+        hamburger.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    hamburger.addEventListener('click', function() {
+        drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+    });
+
+    closeBtn.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+
+    // Close on escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDrawer();
+    });
+})();
+</script>
