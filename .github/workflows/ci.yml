@@ -30,7 +30,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Python environment
+      # Step 2: Install system dependencies for av (PyAV) and other packages
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libav-tools libavcodec-extra libavformat-dev libavdevice-dev
+
+      # Step 3: Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -39,7 +45,7 @@ jobs:
           # pip dependencies 
           cache: "pip"
 
-      # Step 3: Install project dependencies
+      # Step 4: Install project dependencies
       - name: Install dependencies
         run: |
           # Upgrade pip to latest version
