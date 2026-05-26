@@ -9,6 +9,7 @@ on:
 
 env:
   REGISTRY: ${{ secrets.DOCKER_USERNAME }}/intelligent_room_booking
+  
 
 jobs:
   build-and-push:
