@@ -17,7 +17,7 @@ class SelfRAG:
     Production-ready Self-RAG system with reflection and self-correction.
     """
 
-    def __init__(self, retriever, llm_client=None, thresholds: Dict[str, float] = None):
+    def __init__(self, retriever, llm_client=None, thresholds: Dict[str, float] | None = None):
 
         self.retriever = retriever
         self.llm_client = llm_client
@@ -38,9 +38,9 @@ class SelfRAG:
     def generate_with_reflection(
         self,
         query: str,
-        entities: Dict = None,
-        intent: str = None,
-        context: Dict = None,
+        entities: Dict | None = None,
+        intent: str | None = None,
+        context: Dict | None = None,
         max_iterations: int = 3,
     ) -> Dict:
 
@@ -49,7 +49,6 @@ class SelfRAG:
         last_result = {}
 
         while iteration < max_iterations:
-
             retrieved_docs = self.retriever.retrieve(
                 query=refined_query,
                 entities=entities,
@@ -122,9 +121,7 @@ class SelfRAG:
         if not response or not docs:
             return 0.0
 
-        text = " ".join(
-            d.get("document") or d.get("text", "") for d in docs
-        ).lower()
+        text = " ".join(d.get("document") or d.get("text", "") for d in docs).lower()
 
         words = response.lower().split()
         matches = sum(1 for w in words if w in text)

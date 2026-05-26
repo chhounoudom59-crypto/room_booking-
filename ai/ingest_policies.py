@@ -33,9 +33,9 @@ def ingest_policy_document():
     try:
         # Step 1: Load and chunk the document
         loader = LangChainDocumentLoader(
-            chunk_size=800,        # Smaller chunks for policy clarity
+            chunk_size=800,  # Smaller chunks for policy clarity
             chunk_overlap=150,
-            splitter_type="recursive"
+            splitter_type="recursive",
         )
 
         chunks = loader.load_and_chunk_file(
@@ -44,8 +44,8 @@ def ingest_policy_document():
             extra_metadata={
                 "document_type": "booking_policy",
                 "category": "university_rules",
-                "document_name": "University Room Booking Policies"
-            }
+                "document_name": "University Room Booking Policies",
+            },
         )
 
         logger.info(f"Successfully chunked policy into {len(chunks)} chunks")
@@ -58,10 +58,7 @@ def ingest_policy_document():
         ids = [chunk["id"] for chunk in chunks]
 
         success = vector_store.add_documents(
-            collection_name="booking_policies",
-            documents=documents,
-            metadatas=metadatas,
-            ids=ids
+            collection_name="booking_policies", documents=documents, metadatas=metadatas, ids=ids
         )
 
         if success:
@@ -106,7 +103,7 @@ def verify_policy_ingestion():
 
         if results and results.get("documents") and len(results["documents"]) > 0:
             for i, doc in enumerate(results["documents"][0]):
-                logger.info(f"  Result {i+1}: {doc[:100]}...")
+                logger.info(f"  Result {i + 1}: {doc[:100]}...")
         else:
             logger.warning("  No results found")
 
@@ -118,7 +115,7 @@ if __name__ == "__main__":
     from django.conf import settings
 
     if not settings.configured:
-        print("Please run this through Django management command or Django shell")
+        pass
     else:
         success = ingest_policy_document()
         if success:

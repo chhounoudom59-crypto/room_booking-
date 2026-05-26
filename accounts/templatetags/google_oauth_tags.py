@@ -1,6 +1,7 @@
 """
 Custom template tags for handling Google OAuth integration safely.
 """
+
 from allauth.socialaccount.models import SocialApp
 from allauth.socialaccount.providers.google.provider import GoogleProvider
 from allauth.socialaccount.templatetags.socialaccount import provider_login_url
@@ -51,7 +52,7 @@ def safe_google_signup_url(context):
         # If it exists, return the actual login URL (which handles signup too)
         # Add process=signup to help allauth understand the context
         login_url = provider_login_url(context, GoogleProvider.id)
-        if login_url and '?' in login_url:
+        if login_url and "?" in login_url:
             return f"{login_url}&process=signup"
         elif login_url:
             return f"{login_url}?process=signup"
@@ -71,7 +72,7 @@ def safe_google_login_url_with_process(context, process="login"):
         SocialApp.objects.get(provider=GoogleProvider.id)
         # If it exists, return the actual login URL
         login_url = provider_login_url(context, GoogleProvider.id)
-        if login_url and '?' in login_url:
+        if login_url and "?" in login_url:
             return f"{login_url}&process={process}"
         elif login_url:
             return f"{login_url}?process={process}"

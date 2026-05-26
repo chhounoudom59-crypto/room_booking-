@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 try:
     import chromadb
     from chromadb.config import Settings
+
     CHROMADB_AVAILABLE = True
 except Exception:
     chromadb = None
@@ -28,10 +29,7 @@ class VectorStore:
                 "or avoid constructing VectorStore when AI features are disabled."
             )
 
-        self.persist_directory = persist_directory or os.getenv(
-            "VECTOR_DB_PATH",
-            "./vector_db"
-        )
+        self.persist_directory = persist_directory or os.getenv("VECTOR_DB_PATH", "./vector_db")
 
         os.makedirs(self.persist_directory, exist_ok=True)
 
@@ -39,18 +37,13 @@ class VectorStore:
 
         # Initialize persistent ChromaDB client
         self.client = chromadb.PersistentClient(
-            path=self.persist_directory,
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
+            path=self.persist_directory, settings=Settings(anonymized_telemetry=False, allow_reset=True)
         )
 
         # Collections
         self.knowledge_collection = self._get_or_create_collection("knowledge_base")
         self.rooms_collection = self._get_or_create_collection("rooms_info")
         self.policies_collection = self._get_or_create_collection("booking_policies")
-
 
         logger.info("Vector store initialized successfully")
 
@@ -59,33 +52,20 @@ class VectorStore:
     # =========================
 
     def _get_or_create_collection(self, name: str):
-        return self.client.get_or_create_collection(
-            name=name,
-            metadata={"hnsw:space": "cosine"}
-        )
+        return self.client.get_or_create_collection(name=name, metadata={"hnsw:space": "cosine"})
 
     # =========================
     # DOCUMENT INSERTION
     # =========================
 
-    def add_documents(
-        self,
-        collection_name: str,
-        documents: List[str],
-        metadatas: List[Dict],
-        ids: List[str]
-    ) -> bool:
+    def add_documents(self, collection_name: str, documents: List[str], metadatas: List[Dict], ids: List[str]) -> bool:
 
         if not (len(documents) == len(metadatas) == len(ids)):
             raise ValueError("documents, metadatas, and ids must have same length")
 
         collection = self.client.get_collection(collection_name)
 
-        collection.upsert(
-            documents=documents,
-            metadatas=metadatas,
-            ids=ids
-        )
+        collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
 
         logger.info(f"Inserted {len(documents)} documents into '{collection_name}'")
         return True
@@ -105,10 +85,7 @@ class VectorStore:
         collection = self.client.get_collection(collection_name)
 
         return collection.query(
-            query_texts=[query_text],
-            n_results=n_results,
-            where=where,
-            include=["documents", "metadatas", "distances"]
+            query_texts=[query_text], n_results=n_results, where=where, include=["documents", "metadatas", "distances"]
         )
 
     # =========================
@@ -132,7 +109,7 @@ class VectorStore:
         return {
             "knowledge_base": self.knowledge_collection.count(),
             "rooms_info": self.rooms_collection.count(),
-            "booking_policies": self.policies_collection.count()
+            "booking_policies": self.policies_collection.count(),
         }
 
     # =========================

@@ -216,12 +216,12 @@ if not df_bookings.empty:
         orientation='h',
         text=room_bookings.apply(lambda x: f"{x['occupancy_rate']:.1f}% ({x['booking_count']} bookings)", axis=1),
         textposition='auto',
-        marker=dict(
-            color=room_bookings['occupancy_rate'],
-            colorscale='Viridis',
-            showscale=True,
-            colorbar=dict(title="Occupancy %")
-        ),
+        marker={
+            'color': room_bookings['occupancy_rate'],
+            'colorscale': 'Viridis',
+            'showscale': True,
+            'colorbar': {'title': "Occupancy %"}
+        },
         hovertemplate='<b>%{y}</b><br>Occupancy Rate: %{x:.1f}%<br><extra></extra>'
     ))
 
@@ -269,8 +269,8 @@ if not df_bookings.empty:
             y=hourly_bookings['booking_count'],
             mode='lines+markers',
             name='Bookings',
-            line=dict(color='#667eea', width=3),
-            marker=dict(size=8, color='#764ba2'),
+            line={'color': '#667eea', 'width': 3},
+            marker={'size': 8, 'color': '#764ba2'},
             fill='tozeroy',
             fillcolor='rgba(102, 126, 234, 0.2)',
             hovertemplate='<b>Hour: %{x}:00</b><br>Bookings: %{y}<extra></extra>'
@@ -288,13 +288,13 @@ if not df_bookings.empty:
             ax=0,
             ay=-40,
             bgcolor="#ff6b6b",
-            font=dict(color="white", size=12)
+            font={'color': "white", 'size': 12}
         )
 
         fig_hourly.update_layout(
             xaxis_title="Hour of Day",
             yaxis_title="Number of Bookings",
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+            xaxis={'tickmode': 'linear', 'tick0': 0, 'dtick': 1},
             height=400,
             hovermode='x unified'
         )
@@ -316,11 +316,11 @@ if not df_bookings.empty:
         fig_daily.add_trace(go.Bar(
             x=day_bookings['day_of_week'],
             y=day_bookings['booking_count'],
-            marker=dict(
-                color=day_bookings['booking_count'],
-                colorscale='Plasma',
-                showscale=False
-            ),
+            marker={
+                'color': day_bookings['booking_count'],
+                'colorscale': 'Plasma',
+                'showscale': False
+            },
             text=day_bookings['booking_count'],
             textposition='auto',
             hovertemplate='<b>%{x}</b><br>Bookings: %{y}<extra></extra>'
@@ -355,14 +355,14 @@ if not df_bookings.empty:
         texttemplate='%{text}',
         textfont={"size": 10},
         hovertemplate='<b>%{y}</b><br>Hour: %{x}:00<br>Bookings: %{z}<extra></extra>',
-        colorbar=dict(title="Bookings")
+        colorbar={'title': "Bookings"}
     ))
 
     fig_heatmap.update_layout(
         xaxis_title="Hour of Day",
         yaxis_title="Day of Week",
         height=400,
-        xaxis=dict(tickmode='linear', tick0=0, dtick=1)
+        xaxis={'tickmode': 'linear', 'tick0': 0, 'dtick': 1}
     )
 
     st.plotly_chart(fig_heatmap, use_container_width=True)
@@ -400,8 +400,8 @@ if not df_bookings.empty:
             y=daily_util['utilization_rate'],
             mode='lines+markers',
             name='Utilization Rate',
-            line=dict(color='#10b981', width=3),
-            marker=dict(size=8, color='#059669'),
+            line={'color': '#10b981', 'width': 3},
+            marker={'size': 8, 'color': '#059669'},
             fill='tozeroy',
             fillcolor='rgba(16, 185, 129, 0.2)',
             hovertemplate='<b>%{x}</b><br>Utilization: %{y:.1f}%<br>Rooms Booked: ' + daily_util['rooms_booked'].astype(str) + f'/{total_rooms}<extra></extra>'
@@ -413,7 +413,7 @@ if not df_bookings.empty:
             yaxis_title="Utilization Rate (%)",
             height=450,
             hovermode='x unified',
-            yaxis=dict(range=[0, 100])
+            yaxis={'range': [0, 100]}
         )
 
         st.plotly_chart(fig_util, use_container_width=True)
@@ -444,12 +444,12 @@ if not df_bookings.empty:
         fig_util.add_trace(go.Bar(
             x=weekly_util['week'],
             y=weekly_util['utilization_rate'],
-            marker=dict(
-                color=weekly_util['utilization_rate'],
-                colorscale='Greens',
-                showscale=True,
-                colorbar=dict(title="Utilization %")
-            ),
+            marker={
+                'color': weekly_util['utilization_rate'],
+                'colorscale': 'Greens',
+                'showscale': True,
+                'colorbar': {'title': "Utilization %"}
+            },
             text=weekly_util['utilization_rate'].apply(lambda x: f"{x:.1f}%"),
             textposition='auto',
             hovertemplate='<b>Week: %{x}</b><br>Utilization: %{y:.1f}%<extra></extra>'
@@ -460,7 +460,7 @@ if not df_bookings.empty:
             xaxis_title="Week",
             yaxis_title="Utilization Rate (%)",
             height=450,
-            yaxis=dict(range=[0, 100])
+            yaxis={'range': [0, 100]}
         )
 
         st.plotly_chart(fig_util, use_container_width=True)
@@ -481,8 +481,8 @@ if not df_bookings.empty:
             y=monthly_util['utilization_rate'],
             mode='lines+markers',
             name='Utilization Rate',
-            line=dict(color='#8b5cf6', width=4),
-            marker=dict(size=12, color='#7c3aed'),
+            line={'color': '#8b5cf6', 'width': 4},
+            marker={'size': 12, 'color': '#7c3aed'},
             fill='tozeroy',
             fillcolor='rgba(139, 92, 246, 0.2)',
             hovertemplate='<b>%{x}</b><br>Utilization: %{y:.1f}%<extra></extra>'
@@ -493,7 +493,7 @@ if not df_bookings.empty:
             xaxis_title="Month",
             yaxis_title="Utilization Rate (%)",
             height=450,
-            yaxis=dict(range=[0, 100])
+            yaxis={'range': [0, 100]}
         )
 
         st.plotly_chart(fig_util, use_container_width=True)

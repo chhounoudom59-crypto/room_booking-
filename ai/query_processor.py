@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 class QueryProcessor:
-
     def __init__(self, llm_client=None):
         self.llm_client = llm_client
 
@@ -39,7 +38,7 @@ class QueryProcessor:
     # =========================
     # MAIN PIPELINE
     # =========================
-    def process_query(self, query: str, context: Dict = None) -> Dict:
+    def process_query(self, query: str, context: Dict | None = None) -> Dict:
 
         logger.info(f"Processing query: {query[:80]}")
 
@@ -68,8 +67,7 @@ class QueryProcessor:
     def _normalize(self, query: str) -> str:
         query = query.lower().strip()
         query = re.sub(r"\s+", " ", query)
-        query = re.sub(r"[^\w\s\-:,.?!]", "", query)
-        return query
+        return re.sub(r"[^\w\s\-:,.?!]", "", query)
 
     # =========================
     # INTENT CLASSIFICATION
@@ -79,9 +77,7 @@ class QueryProcessor:
         scores = {}
 
         for intent, patterns in self.intent_patterns.items():
-            score = sum(
-                1 for p in patterns if re.search(p, query, re.IGNORECASE)
-            )
+            score = sum(1 for p in patterns if re.search(p, query, re.IGNORECASE))
 
             if score:
                 scores[intent] = min(score / len(patterns), 1.0)
@@ -100,7 +96,7 @@ class QueryProcessor:
     # =========================
     # ENTITY EXTRACTION
     # =========================
-    def extract_entities(self, query: str, context: Dict = None) -> Dict:
+    def extract_entities(self, query: str, context: Dict | None = None) -> Dict:
 
         entities = {}
 
@@ -229,7 +225,7 @@ class QueryProcessor:
                 if response:
                     variants = [v.strip("- 1234567890.\n") for v in response.split("\n") if v.strip()]
                     if variants:
-                        return [query] + variants[:3]
+                        return [query, *variants[:3]]
             except Exception as e:
                 logger.warning(f"LLM Query Rewriter failed: {e}")
 
@@ -263,12 +259,12 @@ class QueryProcessor:
             score += 1.0
         elif len(entities) >= 1:
             score += 0.5
-            
+
         if len(query.split()) > 15:
             score += 1.0
         elif len(query.split()) >= 8:
             score += 0.5
-            
+
         if len(sub_queries) > 1:
             score += 1.0
 
@@ -278,5 +274,5 @@ class QueryProcessor:
 # =========================
 # FACTORY
 # =========================
-def process_query(query: str, context: Dict = None):
+def process_query(query: str, context: Dict | None = None):
     return QueryProcessor().process_query(query, context)

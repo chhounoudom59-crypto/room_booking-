@@ -11,7 +11,7 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'room_booking_system.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "room_booking_system.settings")
 
 application = get_asgi_application()
 
@@ -24,29 +24,29 @@ the WSGI application with WhiteNoise and then convert it to ASGI using
 solution during development when running with uvicorn.
 """
 try:
-	from asgiref.wsgi import WsgiToAsgi
-	from django.conf import settings
-	from django.core.wsgi import get_wsgi_application
-	from whitenoise import WhiteNoise
+    from asgiref.wsgi import WsgiToAsgi
+    from django.conf import settings
+    from django.core.wsgi import get_wsgi_application
+    from whitenoise import WhiteNoise
 
-	# Build WSGI app and wrap with WhiteNoise
-	wsgi_app = get_wsgi_application()
+    # Build WSGI app and wrap with WhiteNoise
+    wsgi_app = get_wsgi_application()
 
-	static_root = getattr(settings, 'STATIC_ROOT', None)
-	if not static_root:
-		static_dirs = getattr(settings, 'STATICFILES_DIRS', [])
-		static_root = static_dirs[0] if static_dirs else None
+    static_root = getattr(settings, "STATIC_ROOT", None)
+    if not static_root:
+        static_dirs = getattr(settings, "STATICFILES_DIRS", [])
+        static_root = static_dirs[0] if static_dirs else None
 
-	if static_root:
-		wsgi_app = WhiteNoise(wsgi_app, root=str(static_root))
+    if static_root:
+        wsgi_app = WhiteNoise(wsgi_app, root=str(static_root))
 
-		# Serve media files too
-		media_root = getattr(settings, 'MEDIA_ROOT', None)
-		if media_root:
-			wsgi_app.add_files(str(media_root), prefix=getattr(settings, 'MEDIA_URL', '/media/').lstrip('/'))
+        # Serve media files too
+        media_root = getattr(settings, "MEDIA_ROOT", None)
+        if media_root:
+            wsgi_app.add_files(str(media_root), prefix=getattr(settings, "MEDIA_URL", "/media/").lstrip("/"))
 
-	# Convert WSGI app (with WhiteNoise) to ASGI
-	application = WsgiToAsgi(wsgi_app)
+    # Convert WSGI app (with WhiteNoise) to ASGI
+    application = WsgiToAsgi(wsgi_app)
 except Exception:
-	# If something goes wrong, keep the original ASGI application
-	pass
+    # If something goes wrong, keep the original ASGI application
+    pass

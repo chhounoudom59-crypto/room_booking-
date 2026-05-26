@@ -19,9 +19,9 @@ def set_chat_agent(agent):
 
 
 class ChatbotConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'chatbot'
-    verbose_name = 'AI Chatbot Assistant'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "chatbot"
+    verbose_name = "AI Chatbot Assistant"
 
     def ready(self):
         global _chat_agent
@@ -36,7 +36,7 @@ class ChatbotConfig(AppConfig):
             # Respect global feature flag before initializing heavy AI subsystems
             from django.conf import settings
 
-            if not getattr(settings, 'AI_ENABLED', False):
+            if not getattr(settings, "AI_ENABLED", False):
                 logger.info("AI features disabled (AI_ENABLED=False). Skipping ChatAgent initialization.")
                 _chat_agent = None
                 return

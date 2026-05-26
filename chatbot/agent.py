@@ -66,7 +66,7 @@ class ChatAgent:
 
             rag = AgenticRAG(
                 vector_store=vector_store,
-                llm_client=None,        # Uses Ollama kernel (not direct LLM client)
+                llm_client=None,  # Uses Ollama kernel (not direct LLM client)
                 enable_self_rag=True,
                 enable_reranking=True,
                 enable_multi_query=True,
@@ -104,6 +104,7 @@ class ChatAgent:
 
         try:
             from ai.vector_store import get_vector_store
+
             vector_stats = get_vector_store().get_collection_stats()
         except Exception as e:
             logger.warning(f"Could not fetch vector store stats: {e}")

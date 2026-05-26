@@ -9,6 +9,7 @@ from django.shortcuts import redirect
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     """
     Custom adapter for handling Google OAuth sign-ups and logins
@@ -31,7 +32,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         if sociallogin.is_existing:
             # User already exists, proceed with login
-            messages.success(request, f'Welcome back, {user.first_name}! You have been signed in with Google.')
+            messages.success(request, f"Welcome back, {user.first_name}! You have been signed in with Google.")
             return
 
         # Check if a user with this email already exists
@@ -40,7 +41,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
                 existing_user = User.objects.get(email=user.email)
                 # Connect the social account to existing user
                 sociallogin.connect(request, existing_user)
-                messages.info(request, 'Successfully connected your Google account to your existing account.')
+                messages.info(request, "Successfully connected your Google account to your existing account.")
                 return
             except User.DoesNotExist:
                 # No existing user with this email, will create new user
@@ -57,50 +58,52 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         extra_data = sociallogin.account.extra_data
 
         # Set user fields from Google data with better handling
-        if not user.first_name and extra_data.get('given_name'):
-            user.first_name = extra_data.get('given_name', '').strip().title()
+        if not user.first_name and extra_data.get("given_name"):
+            user.first_name = extra_data.get("given_name", "").strip().title()
 
-        if not user.last_name and extra_data.get('family_name'):
-            user.last_name = extra_data.get('family_name', '').strip().title()
+        if not user.last_name and extra_data.get("family_name"):
+            user.last_name = extra_data.get("family_name", "").strip().title()
 
         # If no separate first/last name, try to split the full name
-        if not user.first_name and not user.last_name and extra_data.get('name'):
-            full_name = extra_data.get('name', '').strip()
-            name_parts = full_name.split(' ', 1)
-            user.first_name = name_parts[0].title() if name_parts else ''
-            user.last_name = name_parts[1].title() if len(name_parts) > 1 else ''
+        if not user.first_name and not user.last_name and extra_data.get("name"):
+            full_name = extra_data.get("name", "").strip()
+            name_parts = full_name.split(" ", 1)
+            user.first_name = name_parts[0].title() if name_parts else ""
+            user.last_name = name_parts[1].title() if len(name_parts) > 1 else ""
 
         # Generate student ID if not exists - make it clear it's from Google
-        if not hasattr(user, 'student_id') or not user.student_id:
-            user.student_id = "" # Leave empty so user can add their real student ID later
+        if not hasattr(user, "student_id") or not user.student_id:
+            user.student_id = ""  # Leave empty so user can add their real student ID later
 
         # Set default values for required fields that can be edited later
-        if not hasattr(user, 'phone_number') or not user.phone_number:
+        if not hasattr(user, "phone_number") or not user.phone_number:
             user.phone_number = ""  # Leave empty so user can add their real number
 
-        if not hasattr(user, 'faculty') or not user.faculty:
+        if not hasattr(user, "faculty") or not user.faculty:
             user.faculty = ""  # Leave empty so user can select their faculty
 
-        if not hasattr(user, 'department') or not user.department:
+        if not hasattr(user, "department") or not user.department:
             user.department = ""  # Leave empty so user can add their department
 
-        if hasattr(user, 'booking_approval_status'):
-            user.booking_approval_status = 'pending'
+        if hasattr(user, "booking_approval_status"):
+            user.booking_approval_status = "pending"
 
         # Save the user
         user.save()
 
         # Add user to User group
         try:
-            user_group, created = Group.objects.get_or_create(name='User')
+            user_group, _created = Group.objects.get_or_create(name="User")
             user.groups.add(user_group)
             logger.info(f"Added Google user {user.email} to User group")
         except Exception as e:
             logger.error(f"Failed to add user to group: {e}")
 
         # Enhanced welcome message encouraging profile completion
-        welcome_msg = f'Welcome {user.first_name}! Your Google account has been successfully registered. '
-        welcome_msg += 'You can now access all features and your room bookings will automatically sync with your Google Calendar!'
+        welcome_msg = f"Welcome {user.first_name}! Your Google account has been successfully registered. "
+        welcome_msg += (
+            "You can now access all features and your room bookings will automatically sync with your Google Calendar!"
+        )
         messages.success(request, welcome_msg)
 
         return user
@@ -112,15 +115,15 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         user = request.user
 
         # Check user role and redirect accordingly
-        if user.groups.filter(name='Admin').exists():
-            return '/accounts/admin-dashboard/'
+        if user.groups.filter(name="Admin").exists():
+            return "/accounts/admin-dashboard/"
         else:
-            return '/accounts/user-dashboard/'
+            return "/accounts/user-dashboard/"
 
     def authentication_error(self, request, provider_id, error=None, exception=None, extra_context=None):
         """
         Handle authentication errors
         """
         logger.error(f"Google authentication error: {error}, Exception: {exception}")
-        messages.error(request, 'Failed to authenticate with Google. Please try again or use regular login.')
-        return redirect('accounts:login')
+        messages.error(request, "Failed to authenticate with Google. Please try again or use regular login.")
+        return redirect("accounts:login")

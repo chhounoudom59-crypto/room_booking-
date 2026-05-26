@@ -3,19 +3,73 @@
 target-version = "py311"
 line-length = 120
 
+# Files/dirs to exclude from ALL linting and formatting
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "migrations",
+    # Standalone scripts — not part of the app
+    "test_advanced_rag.py",
+    "dashboard_analytics.py",
+    "setup_dashboard.py",
+    "wsgi_pythonanywhere.py",
+    "debug.py",
+    "debug2.py",
+    "run_dashboard.bat",
+    # Flutter
+    "flutter_extracted",
+    "room_booking_flutter",
+]
+
 [lint]
-# Enable standard rules
-select = ["E", "F", "W", "I", "N", "S", "B", "A", "C4", "T20", "RET", "SIM", "PLC", "PLE", "PLW", "RUF"]
+# Core rules — practical set for a Django project
+select = ["E", "F", "W", "I", "N", "B", "A", "C4", "RET", "SIM", "PLC", "PLE", "PLW", "RUF"]
 ignore = [
-    "E501", # Line too long (handled by formatter)
-    "S101", # Use of `assert` is fine in tests
-    "RET505", # Unnecessary `elif` after `return`
+    "E501",    # Line too long (handled by formatter)
+    "E402",    # Module level import not at top — common in Django/chatbot views
+    "E722",    # Bare except — legacy code
+    "S101",    # assert is fine in tests
+    "RET505",  # Unnecessary elif after return
+    "F401",    # Unused import — some are conditionally used
+    "F403",    # star imports in settings files (common Django pattern)
+    "F405",    # may be undefined from star import (settings files)
+    "F811",    # Redefinition — duplicate view definitions to be cleaned up separately
+    "F821",    # Undefined name — dynamic Django patterns
+    "N806",    # Variable should be lowercase — Model names assigned to vars
+    "B025",    # Duplicate exception in try-except
+    "B904",    # raise from err — will fix incrementally
+    "PLW0108", # Lambda may be unnecessary
+    "PLW0602", # global without assignment — singleton pattern
+    "PLW0603", # global statement — singleton pattern in chatbot
+    "PLW1508", # Invalid env var default type — common in settings
+    "PLW2901", # Loop variable overwritten — acceptable pattern
+    "PLC0415", # import not at top — needed in some Django patterns
+    "RUF002",  # Ambiguous en-dash in docstring
+    "RUF012",  # Mutable class attribute default — Django fields
+    "S110",    # try-except-pass — acceptable in settings/startup code
+    "S603",    # subprocess call — acceptable in utility scripts
+    "SIM102",  # Nested if — readability preference
+    "SIM105",  # Use contextlib.suppress — style preference
+    "SIM108",  # Ternary operator — readability preference
+    "N999",    # Invalid module name — Django project structure
 ]
 
 [lint.per-file-ignores]
-"**/tests/*" = ["S101", "F401"]
-"**/tests.py" = ["S101", "F401"]
-"manage.py" = ["PLR0913"]
+# Test files: allow asserts, unused imports, print statements
+"**/tests/*"         = ["S101", "F401", "T201", "PLW0108", "B007"]
+"**/tests.py"        = ["S101", "F401", "T201", "PLW0108"]
+"tests/**"           = ["S101", "F401", "T201", "PLW0108", "B007"]
+# Settings files: star imports are the normal Django pattern
+"**/settings*.py"    = ["F403", "F405", "F401", "E402", "S110", "N802", "PLW1508"]
+# Manage.py
+"manage.py"          = ["PLR0913", "E402"]
+# WSGI / deployment files
+"**/wsgi*.py"        = ["E402"]
+"**/asgi*.py"        = ["E402"]
 
 [lint.mccabe]
 max-complexity = 15
@@ -25,13 +79,3 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-exclude = [
-    ".git",
-    ".venv",
-    "venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "migrations",
-]

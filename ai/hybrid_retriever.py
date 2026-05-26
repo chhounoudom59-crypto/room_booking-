@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 # HYBRID RETRIEVER
 # =========================
 
+
 class HybridRetriever:
     """
     Hybrid Retriever = ChromaDB Vector Search + Keyword Search + DB-structured results.
@@ -17,8 +18,8 @@ class HybridRetriever:
     def __init__(
         self,
         vector_store=None,
-        keyword_index=None,      # reserved for BM25 index (future)
-        database_client=None,    # reserved for Django ORM queries (future)
+        keyword_index=None,  # reserved for BM25 index (future)
+        database_client=None,  # reserved for Django ORM queries (future)
     ):
         self.vector_store = vector_store
         self.keyword_index = keyword_index
@@ -31,7 +32,7 @@ class HybridRetriever:
     def retrieve(
         self,
         query: str,
-        entities: Dict = None,
+        entities: Dict | None = None,
         intent=None,
         top_k: int = 5,
         use_query_routing: bool = True,
@@ -46,10 +47,7 @@ class HybridRetriever:
         entities = entities or {}
 
         # Resolve intent string
-        if isinstance(intent, dict):
-            primary_intent = intent.get("primary", "information")
-        else:
-            primary_intent = intent or "information"
+        primary_intent = intent.get("primary", "information") if isinstance(intent, dict) else intent or "information"
 
         vector_results = self._vector_search(query, entities, primary_intent, top_k)
         keyword_results = self._keyword_search(query, top_k)
@@ -191,15 +189,17 @@ class HybridRetriever:
 
         for i, text in enumerate(documents):
             distance = distances[i] if i < len(distances) else 1.0
-            score = max(0.0, 1.0 - distance)   # cosine distance → similarity
+            score = max(0.0, 1.0 - distance)  # cosine distance → similarity
 
-            results.append({
-                "text": text or "",
-                "document": text or "",         # SelfRAG uses "document" key
-                "metadata": metadatas[i] if i < len(metadatas) else {},
-                "score": score,
-                "source": source,
-            })
+            results.append(
+                {
+                    "text": text or "",
+                    "document": text or "",  # SelfRAG uses "document" key
+                    "metadata": metadatas[i] if i < len(metadatas) else {},
+                    "score": score,
+                    "source": source,
+                }
+            )
 
         return results
 
@@ -220,6 +220,7 @@ class HybridRetriever:
 # MULTI-QUERY RETRIEVER
 # =========================
 
+
 class MultiQueryRetriever:
     """
     Runs multiple query variations through HybridRetriever,
@@ -234,8 +235,8 @@ class MultiQueryRetriever:
     def retrieve(
         self,
         query: str,
-        query_variations: List[str] = None,
-        entities: Dict = None,
+        query_variations: List[str] | None = None,
+        entities: Dict | None = None,
         intent=None,
         top_k: int = 5,
     ) -> List[Dict]:
@@ -247,7 +248,7 @@ class MultiQueryRetriever:
         queries = query_variations or [query]
 
         # Limit to num_queries
-        queries = queries[:self.num_queries]
+        queries = queries[: self.num_queries]
 
         logger.info(f"MultiQueryRetriever: running {len(queries)} query variations")
 
@@ -266,7 +267,7 @@ class MultiQueryRetriever:
         # Parallel Hybrid Retrieval (each query)
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_queries) as executor:
             future_to_query = {executor.submit(_fetch, q): q for q in queries}
-            
+
             for future in concurrent.futures.as_completed(future_to_query):
                 q = future_to_query[future]
                 try:

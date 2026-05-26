@@ -2,6 +2,7 @@
 Django signals for booking app
 Handles automatic Google Calendar integration
 """
+
 import logging
 
 from django.db.models.signals import post_delete, post_save, pre_save
@@ -16,6 +17,7 @@ from .models import Booking
 
 logger = logging.getLogger(__name__)
 
+
 @receiver(post_save, sender=Booking)
 def handle_booking_save(sender, instance, created, **kwargs):
     """
@@ -28,7 +30,7 @@ def handle_booking_save(sender, instance, created, **kwargs):
             logger.info(f"New booking created: {instance.id} for user {instance.user.email}")
 
             # Only create calendar event for confirmed bookings
-            if instance.status == 'confirmed':
+            if instance.status == "confirmed":
                 success = create_calendar_event_for_booking(instance)
                 if success:
                     logger.info(f"Successfully created calendar event for booking {instance.id}")
@@ -40,25 +42,26 @@ def handle_booking_save(sender, instance, created, **kwargs):
             logger.info(f"Booking updated: {instance.id}")
 
             # If booking was cancelled, delete calendar event
-            if instance.status in ['cancelled', 'no_show']:
+            if instance.status in ["cancelled", "no_show"]:
                 success = delete_calendar_event_for_booking(instance)
                 if success:
                     logger.info(f"Successfully deleted calendar event for cancelled booking {instance.id}")
 
             # If booking details changed and it's still confirmed, update calendar event
-            elif instance.status == 'confirmed' and instance.google_event_id:
+            elif instance.status == "confirmed" and instance.google_event_id:
                 success = update_calendar_event_for_booking(instance)
                 if success:
                     logger.info(f"Successfully updated calendar event for booking {instance.id}")
 
             # If booking was just confirmed and doesn't have a calendar event yet
-            elif instance.status == 'confirmed' and not instance.google_event_id:
+            elif instance.status == "confirmed" and not instance.google_event_id:
                 success = create_calendar_event_for_booking(instance)
                 if success:
                     logger.info(f"Successfully created calendar event for newly confirmed booking {instance.id}")
 
     except Exception as e:
         logger.error(f"Error in booking signal handler: {e}")
+
 
 @receiver(post_delete, sender=Booking)
 def handle_booking_delete(sender, instance, **kwargs):
@@ -78,6 +81,7 @@ def handle_booking_delete(sender, instance, **kwargs):
 
     except Exception as e:
         logger.error(f"Error in booking deletion signal: {e}")
+
 
 # Signal to track booking changes for calendar updates
 @receiver(pre_save, sender=Booking)

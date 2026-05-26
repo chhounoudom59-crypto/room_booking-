@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from chatbot.integrations.ai_gateway import ensure_ai_ready, get_rag_system
+from chatbot.integrations.ai_gateway import ensure_ai_ready
 from chatbot.services.booking_service import (
     auto_book,
     build_booking_criteria,
@@ -35,27 +35,28 @@ logger = logging.getLogger(__name__)
 # BASIC ENDPOINTS
 # =========================
 
+
 @require_http_methods(["GET"])
 def chatbot_index(request):
-    return JsonResponse({
-        "service": "chatbot",
-        "status": "ok",
-        "message": "Use /chatbot/chat/ for chat requests.",
-    })
+    return JsonResponse(
+        {
+            "service": "chatbot",
+            "status": "ok",
+            "message": "Use /chatbot/chat/ for chat requests.",
+        }
+    )
 
 
 @require_http_methods(["GET"])
 def health_check(request):
     rag_system, _ = ensure_ai_ready()
-    return JsonResponse({
-        "status": "ok",
-        "rag_initialized": rag_system is not None
-    })
+    return JsonResponse({"status": "ok", "rag_initialized": rag_system is not None})
 
 
 # =========================
 # CLEAR SESSION
 # =========================
+
 
 @csrf_exempt
 @require_http_methods(["POST", "OPTIONS"])
@@ -86,6 +87,7 @@ def clear_session(request):
 # CHAT ENDPOINT
 # =========================
 
+
 @csrf_exempt
 @require_http_methods(["POST", "OPTIONS"])
 async def chat_endpoint(request):
@@ -104,10 +106,7 @@ async def chat_endpoint(request):
         session_ctx = get_session_context(session_id)
 
         if not user_message:
-            return JsonResponse({
-                "reply_text": "How can I help you with booking?",
-                "session_id": session_id
-            })
+            return JsonResponse({"reply_text": "How can I help you with booking?", "session_id": session_id})
 
         rag_system, booking_automation = ensure_ai_ready()
 
@@ -119,11 +118,13 @@ async def chat_endpoint(request):
                 "3) Optional: run Ollama (ollama serve) for smarter replies\n"
                 "You can still book rooms from the Book page."
             )
-            return JsonResponse({
-                "reply_text": fallback,
-                "session_id": session_id,
-                "rag_mode": "offline",
-            })
+            return JsonResponse(
+                {
+                    "reply_text": fallback,
+                    "session_id": session_id,
+                    "rag_mode": "offline",
+                }
+            )
 
         # =========================
         # RAG PROCESSING
@@ -159,19 +160,18 @@ async def chat_endpoint(request):
         if primary_intent == "booking" and validate_booking_entities(entities):
             criteria = build_booking_criteria(entities, user_message)
 
-            rooms = await find_best_rooms(
-                booking_automation,
-                criteria,
-                limit=3
-            )
+            rooms = await find_best_rooms(booking_automation, criteria, limit=3)
 
             if rooms:
                 best_room = rooms[0]["room"]
 
-                set_booking_preview(session_id, {
-                    "criteria": criteria,
-                    "best_room_id": best_room.id,
-                })
+                set_booking_preview(
+                    session_id,
+                    {
+                        "criteria": criteria,
+                        "best_room_id": best_room.id,
+                    },
+                )
 
                 rooms_payload = [
                     {
@@ -186,15 +186,10 @@ async def chat_endpoint(request):
 
                 response_text = "I found available rooms for your booking."
 
-                actions = [{
-                    "type": "confirm_booking",
-                    "label": "Confirm Booking"
-                }]
+                actions = [{"type": "confirm_booking", "label": "Confirm Booking"}]
 
             else:
-                response_text = (
-                    "No available rooms found. Try another time slot."
-                )
+                response_text = "No available rooms found. Try another time slot."
 
         # =========================
         # RESPONSE
@@ -225,15 +220,19 @@ async def chat_endpoint(request):
             hint = err_msg
         else:
             hint = "Something went wrong. Please try again or restart the server."
-        return JsonResponse({
-            "error": "internal_error",
-            "reply_text": hint,
-        }, status=500)
+        return JsonResponse(
+            {
+                "error": "internal_error",
+                "reply_text": hint,
+            },
+            status=500,
+        )
 
 
 # =========================
 # CONFIRM BOOKING
 # =========================
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -260,22 +259,20 @@ async def confirm_booking(request):
         email = optional_string(body, "email") or optional_string(body, "user_email")
         if email:
             from accounts.models import User
+
             user = User.objects.filter(email=email).first()
     if user is None:
-        return JsonResponse({
-            "reply_text": "Please log in on the website before confirming a booking.",
-        }, status=401)
+        return JsonResponse(
+            {
+                "reply_text": "Please log in on the website before confirming a booking.",
+            },
+            status=401,
+        )
 
-    result = await auto_book(
-        booking_automation,
-        user,
-        criteria
-    )
+    result = await auto_book(booking_automation, user, criteria)
 
     clear_booking_preview(session_id)
 
-    return JsonResponse({
-        "reply_text": result.get("user_message", "Booking confirmed"),
-        "result": result,
-        "session_id": session_id
-    })
+    return JsonResponse(
+        {"reply_text": result.get("user_message", "Booking confirmed"), "result": result, "session_id": session_id}
+    )

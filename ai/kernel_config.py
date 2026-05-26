@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # OLLAMA CONNECTOR
 # =========================
 
+
 class OllamaChatCompletion(ChatCompletionClientBase):
     """
     Lightweight Ollama connector for Semantic Kernel (production-safe version)
@@ -32,10 +33,7 @@ class OllamaChatCompletion(ChatCompletionClientBase):
         return self.model_id
 
     async def get_chat_message_contents(
-        self,
-        chat_history: ChatHistory,
-        settings: PromptExecutionSettings,
-        **kwargs
+        self, chat_history: ChatHistory, settings: PromptExecutionSettings, **kwargs
     ) -> List[ChatMessageContent]:
 
         messages = []
@@ -78,7 +76,7 @@ class OllamaChatCompletion(ChatCompletionClientBase):
 
             except requests.exceptions.ReadTimeout:
                 logger.warning(f"Ollama timeout attempt {attempt + 1}")
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
 
             except requests.exceptions.ConnectionError:
                 raise Exception("Cannot connect to Ollama. Run: `ollama serve`")
@@ -88,10 +86,7 @@ class OllamaChatCompletion(ChatCompletionClientBase):
                 raise
 
         return [
-            ChatMessageContent(
-                role=AuthorRole.ASSISTANT,
-                content="Sorry, the AI model is not responding right now."
-            )
+            ChatMessageContent(role=AuthorRole.ASSISTANT, content="Sorry, the AI model is not responding right now.")
         ]
 
     async def get_streaming_chat_message_contents(
@@ -106,20 +101,15 @@ class OllamaChatCompletion(ChatCompletionClientBase):
 # KERNEL FACTORY
 # =========================
 
-def create_kernel_ollama(
-    model: Optional[str] = None,
-    base_url: Optional[str] = None
-) -> Kernel:
+
+def create_kernel_ollama(model: Optional[str] = None, base_url: Optional[str] = None) -> Kernel:
 
     model = model or os.getenv("OLLAMA_MODEL", "gemma3:1b")
     base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
     kernel = Kernel()
 
-    ollama_service = OllamaChatCompletion(
-        model_id=model,
-        base_url=base_url
-    )
+    ollama_service = OllamaChatCompletion(model_id=model, base_url=base_url)
 
     kernel.add_service(ollama_service)
 
@@ -131,6 +121,7 @@ def create_kernel_ollama(
 # =========================
 # HUGGING FACE INFERENCE (router API)
 # =========================
+
 
 class HuggingFaceChatCompletion(ChatCompletionClientBase):
     """
@@ -148,10 +139,7 @@ class HuggingFaceChatCompletion(ChatCompletionClientBase):
         return self.model_id
 
     async def get_chat_message_contents(
-        self,
-        chat_history: ChatHistory,
-        settings: PromptExecutionSettings,
-        **kwargs
+        self, chat_history: ChatHistory, settings: PromptExecutionSettings, **kwargs
     ) -> List[ChatMessageContent]:
 
         if not self.api_key:
@@ -203,11 +191,7 @@ class HuggingFaceChatCompletion(ChatCompletionClientBase):
                 raise Exception(f"Hugging Face API error ({response.status_code}): {response.text}")
 
             data = response.json()
-            content = (
-                data.get("choices", [{}])[0]
-                .get("message", {})
-                .get("content", "")
-            )
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
             if not content:
                 content = "Sorry, I did not receive a valid response from the model."

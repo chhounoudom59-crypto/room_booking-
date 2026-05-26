@@ -8,6 +8,7 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
+
 def send_booking_confirmation_email(booking):
     """Send booking confirmation email to user"""
     try:
@@ -19,8 +20,8 @@ Hello {booking.user.first_name}!
 Your room booking has been confirmed successfully. Here are the details:
 
 Room: {booking.room.name} ({booking.room.room_number})
-Date: {booking.start_time.strftime('%B %d, %Y')}
-Time: {booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}
+Date: {booking.start_time.strftime("%B %d, %Y")}
+Time: {booking.start_time.strftime("%I:%M %p")} - {booking.end_time.strftime("%I:%M %p")}
 Duration: {booking.duration} hours
 Purpose: {booking.purpose}
 Status: {booking.get_status_display()}
@@ -52,6 +53,7 @@ If you have any questions, please contact our support team.
         logger.error(f"Failed to send booking confirmation email: {e!s}")
         return False
 
+
 def send_booking_cancellation_email(booking):
     """Send booking cancellation email to user"""
     try:
@@ -63,8 +65,8 @@ Hello {booking.user.first_name}!
 Your room booking has been cancelled. Here are the details of the cancelled booking:
 
 Room: {booking.room.name} ({booking.room.room_number})
-Date: {booking.start_time.strftime('%B %d, %Y')}
-Time: {booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}
+Date: {booking.start_time.strftime("%B %d, %Y")}
+Time: {booking.start_time.strftime("%I:%M %p")} - {booking.end_time.strftime("%I:%M %p")}
 Purpose: {booking.purpose}
 Status: {booking.get_status_display()}
 
@@ -93,6 +95,7 @@ If you have any questions, please contact our support team.
         logger.error(f"Failed to send booking cancellation email: {e!s}")
         return False
 
+
 def send_booking_reminder_email(booking):
     """Send booking reminder email to user"""
     try:
@@ -108,8 +111,8 @@ This is a reminder that you have a room booking in {hours_until} hours.
 
 Booking Details:
 Room: {booking.room.name} ({booking.room.room_number})
-Date: {booking.start_time.strftime('%B %d, %Y')}
-Time: {booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}
+Date: {booking.start_time.strftime("%B %d, %Y")}
+Time: {booking.start_time.strftime("%I:%M %p")} - {booking.end_time.strftime("%I:%M %p")}
 Duration: {booking.duration} hours
 Purpose: {booking.purpose}
 
@@ -138,6 +141,7 @@ This is an automated email. Please do not reply to this email.
         logger.error(f"Failed to send booking reminder email: {e!s}")
         return False
 
+
 def send_admin_notification_email(booking, action):
     """Send notification email to admin about booking actions"""
     try:
@@ -152,13 +156,13 @@ Booking Details:
 User: {booking.user.first_name} {booking.user.last_name} ({booking.user.email})
 Student ID: {booking.user.student_id}
 Room: {booking.room.name} ({booking.room.room_number})
-Date: {booking.start_time.strftime('%B %d, %Y')}
-Time: {booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}
+Date: {booking.start_time.strftime("%B %d, %Y")}
+Time: {booking.start_time.strftime("%I:%M %p")} - {booking.end_time.strftime("%I:%M %p")}
 Duration: {booking.duration} hours
 Purpose: {booking.purpose}
 Status: {booking.get_status_display()}
 Action: {action.title()}
-Timestamp: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}
+Timestamp: {timezone.now().strftime("%B %d, %Y at %I:%M %p")}
 
 Please review this booking in the admin dashboard if necessary.
 
@@ -180,6 +184,7 @@ Room Booking System - Admin Notification
         logger.error(f"Failed to send admin notification email: {e!s}")
         return False
 
+
 def send_booking_reminder_batch():
     """Send reminder emails for bookings starting in 1 hour"""
     from .models import Booking
@@ -189,7 +194,7 @@ def send_booking_reminder_batch():
     upcoming_bookings = Booking.objects.filter(
         start_time__gte=one_hour_from_now - timedelta(minutes=30),
         start_time__lte=one_hour_from_now + timedelta(minutes=30),
-        status='confirmed'
+        status="confirmed",
     )
 
     sent_count = 0
@@ -199,6 +204,7 @@ def send_booking_reminder_batch():
 
     logger.info(f"Sent {sent_count} booking reminder emails")
     return sent_count
+
 
 # Step 23: System Announcements
 def send_announcement_email(announcement, users):
@@ -214,7 +220,7 @@ System Announcement
 {announcement.content}
 
 Priority: {announcement.get_priority_display()}
-Date: {announcement.created_at.strftime('%B %d, %Y')}
+Date: {announcement.created_at.strftime("%B %d, %Y")}
 
 ---
 Room Booking System

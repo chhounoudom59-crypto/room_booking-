@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional, Tuple
 # JSON BODY PARSER
 # =========================
 
+
 def parse_json_body(request) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str], int]:
     """
     Safely parse JSON request body.
@@ -36,6 +37,7 @@ def parse_json_body(request) -> Tuple[bool, Optional[Dict[str, Any]], Optional[s
 # =========================
 # REQUIRED STRING FIELD
 # =========================
+
 
 def require_string_field(
     payload: Dict[str, Any],
@@ -69,6 +71,7 @@ def require_string_field(
 # OPTIONAL STRING FIELD
 # =========================
 
+
 def optional_string(payload: Dict[str, Any], field: str, default: str = "") -> str:
     """
     Safely extract optional string field.
@@ -84,6 +87,7 @@ def optional_string(payload: Dict[str, Any], field: str, default: str = "") -> s
 # =========================
 # SLOT VALIDATION
 # =========================
+
 
 def validate_update_slots(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -106,9 +110,8 @@ def validate_update_slots(payload: Dict[str, Any]) -> Dict[str, Any]:
             continue
 
         # allow safe primitive values only
-        if isinstance(value, (str, int, float, bool)):
-            if value is not None and value != "":
-                cleaned[key] = value
+        if isinstance(value, (str, int, float, bool)) and value is not None and value != "":
+            cleaned[key] = value
 
     return cleaned
 
@@ -116,6 +119,7 @@ def validate_update_slots(payload: Dict[str, Any]) -> Dict[str, Any]:
 # =========================
 # BOOKING VALIDATION
 # =========================
+
 
 def validate_booking_entities(entities: Dict[str, Any]) -> bool:
     """

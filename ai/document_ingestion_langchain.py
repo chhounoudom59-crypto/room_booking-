@@ -15,12 +15,7 @@ class LangChainDocumentLoader:
     Loads files → extracts text → chunks → adds metadata
     """
 
-    def __init__(
-        self,
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
-        splitter_type: str = "recursive"
-    ):
+    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200, splitter_type: str = "recursive"):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.splitter_type = splitter_type
@@ -28,8 +23,7 @@ class LangChainDocumentLoader:
         self.splitter = self._init_splitter()
 
         logger.info(
-            f"Document Loader initialized | "
-            f"chunk_size={chunk_size}, overlap={chunk_overlap}, type={splitter_type}"
+            f"Document Loader initialized | chunk_size={chunk_size}, overlap={chunk_overlap}, type={splitter_type}"
         )
 
     # =========================
@@ -52,14 +46,7 @@ class LangChainDocumentLoader:
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap,
                 length_function=len,
-                separators=[
-                    "\n\n",
-                    "\n",
-                    ". ",
-                    ", ",
-                    " ",
-                    ""
-                ]
+                separators=["\n\n", "\n", ". ", ", ", " ", ""],
             )
 
         except ImportError as e:
@@ -157,24 +144,21 @@ class LangChainDocumentLoader:
         results = []
 
         for i, chunk in enumerate(chunks):
-
             # better ID (stable + unique)
-            raw_id = f"{metadata.get('source_file','file')}:{i}:{chunk[:50]}"
+            raw_id = f"{metadata.get('source_file', 'file')}:{i}:{chunk[:50]}"
             chunk_id = hashlib.sha256(raw_id.encode()).hexdigest()
 
             chunk_metadata = copy.deepcopy(metadata)
-            chunk_metadata.update({
-                "chunk_index": i,
-                "total_chunks": len(chunks),
-                "chunk_length": len(chunk),
-                "created_at": datetime.utcnow().isoformat()
-            })
+            chunk_metadata.update(
+                {
+                    "chunk_index": i,
+                    "total_chunks": len(chunks),
+                    "chunk_length": len(chunk),
+                    "created_at": datetime.utcnow().isoformat(),
+                }
+            )
 
-            results.append({
-                "id": chunk_id,
-                "text": chunk,
-                "metadata": chunk_metadata
-            })
+            results.append({"id": chunk_id, "text": chunk, "metadata": chunk_metadata})
 
         return results
 
@@ -182,10 +166,7 @@ class LangChainDocumentLoader:
     # MAIN INGESTION
     # =========================
     def load_and_chunk_file(
-        self,
-        file_path: str,
-        user_id: Optional[int] = None,
-        extra_metadata: Optional[Dict] = None
+        self, file_path: str, user_id: Optional[int] = None, extra_metadata: Optional[Dict] = None
     ) -> List[Dict]:
 
         text = self.load_file(file_path)
@@ -211,11 +192,7 @@ class LangChainDocumentLoader:
     # =========================
     # DIRECTORY LOADER
     # =========================
-    def load_directory(
-        self,
-        directory: str,
-        user_id: Optional[int] = None
-    ) -> List[Dict]:
+    def load_directory(self, directory: str, user_id: Optional[int] = None) -> List[Dict]:
 
         all_chunks = []
 
@@ -224,10 +201,7 @@ class LangChainDocumentLoader:
         for file_path in Path(directory).rglob("*"):
             if file_path.is_file() and file_path.suffix.lower() in supported:
                 try:
-                    chunks = self.load_and_chunk_file(
-                        str(file_path),
-                        user_id=user_id
-                    )
+                    chunks = self.load_and_chunk_file(str(file_path), user_id=user_id)
                     all_chunks.extend(chunks)
 
                 except Exception as e:
@@ -240,10 +214,7 @@ class LangChainDocumentLoader:
 # =========================
 # CONVENIENCE FUNCTION
 # =========================
-def load_documents_with_langchain(
-    file_paths: List[str],
-    user_id: Optional[int] = None
-) -> List[Dict]:
+def load_documents_with_langchain(file_paths: List[str], user_id: Optional[int] = None) -> List[Dict]:
 
     loader = LangChainDocumentLoader()
     all_chunks = []

@@ -6,10 +6,8 @@ from booking.email_utils import send_booking_reminder_batch
 
 
 class Command(BaseCommand):
-    help = 'Send reminder emails for upcoming bookings'
+    help = "Send reminder emails for upcoming bookings"
 
     def handle(self, *args, **options):
         count = send_booking_reminder_batch()
-        self.stdout.write(
-            self.style.SUCCESS(f'Successfully sent {count} reminder emails')
-        )
+        self.stdout.write(self.style.SUCCESS(f"Successfully sent {count} reminder emails"))

@@ -19,7 +19,7 @@ python manage.py setup_google_oauth --client-id YOUR_CLIENT_ID --client-secret Y
 
 Or add them manually in Django admin:
 1. Go to /admin/
-2. Navigate to "Social Applications" 
+2. Navigate to "Social Applications"
 3. Add new Social Application:
    - Provider: Google
    - Name: Google
@@ -34,41 +34,39 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Setup Google OAuth application'
+    help = "Setup Google OAuth application"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--client-id',
+            "--client-id",
             type=str,
-            help='Google OAuth Client ID',
+            help="Google OAuth Client ID",
         )
         parser.add_argument(
-            '--client-secret',
+            "--client-secret",
             type=str,
-            help='Google OAuth Client Secret',
+            help="Google OAuth Client Secret",
         )
 
     def handle(self, *args, **options):
-        if not options['client_id'] or not options['client_secret']:
-            self.stdout.write(
-                self.style.WARNING(__doc__)
-            )
+        if not options["client_id"] or not options["client_secret"]:
+            self.stdout.write(self.style.WARNING(__doc__))
             return
 
         # Get or create the Google social app
         google_app, created = SocialApp.objects.get_or_create(
-            provider='google',
+            provider="google",
             defaults={
-                'name': 'Google',
-                'client_id': options['client_id'],
-                'secret': options['client_secret'],
-            }
+                "name": "Google",
+                "client_id": options["client_id"],
+                "secret": options["client_secret"],
+            },
         )
 
         if not created:
             # Update existing app
-            google_app.client_id = options['client_id']
-            google_app.secret = options['client_secret']
+            google_app.client_id = options["client_id"]
+            google_app.secret = options["client_secret"]
             google_app.save()
 
         # Add current site to the app
@@ -77,9 +75,9 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Successfully {"created" if created else "updated"} Google OAuth application!\n'
-                f'Client ID: {options["client_id"]}\n'
-                f'Site: {current_site.domain}\n'
-                f'Callback URL: http://{current_site.domain}/accounts/google/login/callback/'
+                f"Successfully {'created' if created else 'updated'} Google OAuth application!\n"
+                f"Client ID: {options['client_id']}\n"
+                f"Site: {current_site.domain}\n"
+                f"Callback URL: http://{current_site.domain}/accounts/google/login/callback/"
             )
         )

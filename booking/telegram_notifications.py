@@ -1,11 +1,12 @@
 def format_support_message(name, email, subject, message):
     """Format a support message for Telegram notification."""
     return (
-        f"\U0001F6A8 *User Issue Reported* \U0001F6A8\n"
+        f"\U0001f6a8 *User Issue Reported* \U0001f6a8\n"
         f"*From:* {name} ({email})\n"
         f"*Subject:* {subject}\n"
         f"*Message:* {message}"
     )
+
 
 def send_support_message_to_telegram(name, email, subject, message):
     """Send a support message to all admin Telegram chat IDs."""
@@ -17,7 +18,9 @@ def send_support_message_to_telegram(name, email, subject, message):
     logger.info(f"[DEBUG] Alert message: {alert_msg}")
     for chat_id in ADMIN_CHAT_IDS:
         logger.info(f"[DEBUG] Sending Telegram alert to chat_id: {chat_id}")
-        send_telegram_message(chat_id, alert_msg, parse_mode='Markdown')
+        send_telegram_message(chat_id, alert_msg, parse_mode="Markdown")
+
+
 import logging
 
 import requests
@@ -30,22 +33,18 @@ from .models import Booking
 logger = logging.getLogger(__name__)
 
 # Telegram Bot Configuration
-TELEGRAM_BOT_TOKEN = getattr(settings, 'TELEGRAM_BOT_TOKEN', None)
-ADMIN_CHAT_IDS = getattr(settings, 'TELEGRAM_ADMIN_CHAT_IDS', [])  # List of admin chat IDs
+TELEGRAM_BOT_TOKEN = getattr(settings, "TELEGRAM_BOT_TOKEN", None)
+ADMIN_CHAT_IDS = getattr(settings, "TELEGRAM_ADMIN_CHAT_IDS", [])  # List of admin chat IDs
 
-def send_telegram_message(chat_id, message, parse_mode='Markdown'):
+
+def send_telegram_message(chat_id, message, parse_mode="Markdown"):
     if not TELEGRAM_BOT_TOKEN:
         logger.warning("Telegram bot token not configured")
         return False
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-    payload = {
-        'chat_id': chat_id,
-        'text': message,
-        'parse_mode': parse_mode,
-        'disable_web_page_preview': True
-    }
+    payload = {"chat_id": chat_id, "text": message, "parse_mode": parse_mode, "disable_web_page_preview": True}
 
     try:
         response = requests.post(url, json=payload, timeout=10)
@@ -59,35 +58,33 @@ def send_telegram_message(chat_id, message, parse_mode='Markdown'):
         logger.error(f"Error sending Telegram message: {e!s}")
         return False
 
+
 def format_booking_notification(booking, action="created"):
     user = booking.user
     room = booking.room
 
     # Emoji based on action with bright colors
     emoji_map = {
-        'confirmed': '✅',
-        'cancelled': '🔴',
+        "confirmed": "✅",
+        "cancelled": "🔴",
     }
 
     action_text = {
-        'created': 'New Booking',
-        'confirmed': 'Booking Confirmed',
-        'cancelled': 'Booking Cancelled',
-        'updated': 'Booking Updated'
+        "created": "New Booking",
+        "confirmed": "Booking Confirmed",
+        "cancelled": "Booking Cancelled",
+        "updated": "Booking Updated",
     }
 
-    emoji = emoji_map.get(action, '📋')
-    title = action_text.get(action, 'Booking Notification')
+    emoji = emoji_map.get(action, "📋")
+    title = action_text.get(action, "Booking Notification")
 
     # Calculate duration
     duration_hours = int((booking.end_time - booking.start_time).total_seconds() / 3600)
     duration_mins = int(((booking.end_time - booking.start_time).total_seconds() % 3600) / 60)
-    if duration_mins > 0:
-        duration_text = f"{duration_hours}h {duration_mins}m"
-    else:
-        duration_text = f"{duration_hours}h"
+    duration_text = f"{duration_hours}h {duration_mins}m" if duration_mins > 0 else f"{duration_hours}h"
 
-    message = f"""{emoji} *{title}*
+    return f"""{emoji} *{title}*
 
 👤 *User*: {user.get_full_name() or user.username}
 📧 *Email*: {user.email}
@@ -97,17 +94,16 @@ def format_booking_notification(booking, action="created"):
 🙋 *Participants*: {booking.attendees} people
 🏷️ *Type*: {room.room_type.title()}
 
-📅 *Date*: {booking.start_time.strftime('%A, %B %d, %Y')}
-⏰ *Time*: {booking.start_time.strftime('%H:%M')} - {booking.end_time.strftime('%H:%M')}
+📅 *Date*: {booking.start_time.strftime("%A, %B %d, %Y")}
+⏰ *Time*: {booking.start_time.strftime("%H:%M")} - {booking.end_time.strftime("%H:%M")}
 ⏱️ *Duration*: {duration_text}
-🎯 *Purpose*: _{booking.purpose or 'Not specified'}_
-📝 *Additional Notes*: _{booking.additional_notes or 'None'}_
+🎯 *Purpose*: _{booking.purpose or "Not specified"}_
+📝 *Additional Notes*: _{booking.additional_notes or "None"}_
 
 🆔 *Booking ID*: #{booking.id}
 ━━━━━━━━━━━━━━
 {emoji} *Status*: {booking.status.upper()}"""
 
-    return message
 
 @receiver(post_save, sender=Booking)
 def booking_created_notification(sender, instance, created, **kwargs):
@@ -124,12 +120,12 @@ def booking_created_notification(sender, instance, created, **kwargs):
         # Booking was updated - check if status changed
         try:
             # Check if status changed to cancelled or confirmed
-            if hasattr(instance, '_previous_status'):
+            if hasattr(instance, "_previous_status"):
                 old_status = instance._previous_status
                 new_status = instance.status
 
                 # Notify on status changes to confirmed or cancelled
-                if old_status != new_status and new_status in ['confirmed', 'cancelled']:
+                if old_status != new_status and new_status in ["confirmed", "cancelled"]:
                     action = new_status
                     message = format_booking_notification(instance, action)
                     for chat_id in ADMIN_CHAT_IDS:
@@ -137,6 +133,7 @@ def booking_created_notification(sender, instance, created, **kwargs):
 
         except Exception as e:
             logger.error(f"Error checking booking status change: {e}")
+
 
 @receiver(pre_save, sender=Booking)
 def track_booking_status(sender, instance, **kwargs):
@@ -149,15 +146,10 @@ def track_booking_status(sender, instance, **kwargs):
     else:
         instance._previous_status = None
 
+
 def alert_to_admins(message):
     if not ADMIN_CHAT_IDS:
         return
 
     for chat_id in ADMIN_CHAT_IDS:
         send_telegram_message(chat_id, message)
-
-
-
-
-
-

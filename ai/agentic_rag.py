@@ -12,15 +12,15 @@ from ai.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
-class AgenticRAG:
 
+class AgenticRAG:
     def __init__(
         self,
         vector_store: VectorStore = None,
         llm_client=None,
         enable_self_rag: bool = True,
         enable_reranking: bool = True,
-        enable_multi_query: bool = True
+        enable_multi_query: bool = True,
     ):
         # Initialize vector store
         self.vector_store = vector_store or VectorStore()
@@ -41,7 +41,7 @@ class AgenticRAG:
         self.retriever = HybridRetriever(
             vector_store=self.vector_store,
             keyword_index=None,  # Can add BM25 index later
-            database_client=None  # Uses Django ORM
+            database_client=None,  # Uses Django ORM
         )
 
         # Multi-query retriever (wraps hybrid retriever)
@@ -62,17 +62,19 @@ class AgenticRAG:
             self.self_rag = SelfRAG(self.retriever, llm_client)
             logger.info(" Self-RAG enabled")
 
-        logger.info(f" Agentic RAG initialized (Self-RAG: {self.enable_self_rag}, "
-                   f"Re-ranking: {self.enable_reranking}, Multi-Query: {self.enable_multi_query})")
+        logger.info(
+            f" Agentic RAG initialized (Self-RAG: {self.enable_self_rag}, "
+            f"Re-ranking: {self.enable_reranking}, Multi-Query: {self.enable_multi_query})"
+        )
 
     def process_query(
         self,
         query: str,
-        context: Dict = None,
-        conversation_history: List[Dict] = None,
-        user_info: Dict = None,
+        context: Dict | None = None,
+        conversation_history: List[Dict] | None = None,
+        user_info: Dict | None = None,
         top_k: int = 5,
-        use_self_rag: bool = None
+        use_self_rag: bool | None = None,
     ) -> Dict:
 
         logger.info("=" * 80)
@@ -85,11 +87,11 @@ class AgenticRAG:
         logger.info("Step 1: Query Processing...")
         processed_query = self.query_processor.process_query(query, context)
 
-        intent = processed_query['intent']
-        entities = processed_query['entities']
-        sub_queries = processed_query['sub_queries']
-        expanded_queries = processed_query['expanded_queries']
-        complexity = processed_query['complexity']
+        intent = processed_query["intent"]
+        entities = processed_query["entities"]
+        processed_query["sub_queries"]
+        expanded_queries = processed_query["expanded_queries"]
+        complexity = processed_query["complexity"]
 
         logger.info(f"  Intent: {intent.get('primary') if isinstance(intent, dict) else intent}")
         logger.info(f"  Entities: {entities}")
@@ -108,16 +110,12 @@ class AgenticRAG:
                 query_variations=expanded_queries,
                 entities=entities,
                 intent=intent,
-                top_k=top_k * 2  # Retrieve more for re-ranking
+                top_k=top_k * 2,  # Retrieve more for re-ranking
             )
         else:
             logger.info("  Using standard hybrid retrieval")
             retrieved_docs = self.retriever.retrieve(
-                query=query,
-                entities=entities,
-                intent=intent,
-                top_k=top_k * 2,
-                use_query_routing=True
+                query=query, entities=entities, intent=intent, top_k=top_k * 2, use_query_routing=True
             )
 
         logger.info(f"  Retrieved {len(retrieved_docs)} documents")
@@ -125,11 +123,7 @@ class AgenticRAG:
         # Step 3: Re-Ranking (if enabled)
         if self.enable_reranking and retrieved_docs:
             logger.info("Step 3: Re-ranking...")
-            retrieved_docs = self.reranker.rerank(
-                query=query,
-                documents=retrieved_docs,
-                top_k=top_k
-            )
+            retrieved_docs = self.reranker.rerank(query=query, documents=retrieved_docs, top_k=top_k)
             logger.info(f"  Re-ranked to top {len(retrieved_docs)} documents")
         else:
             # Just take top_k
@@ -145,42 +139,26 @@ class AgenticRAG:
             logger.info("Step 4: Self-RAG Generation...")
             try:
                 self_rag_result = self.self_rag.generate_with_reflection(
-                    query=query,
-                    entities=entities,
-                    intent=intent,
-                    context=context,
-                    max_iterations=2
+                    query=query, entities=entities, intent=intent, context=context, max_iterations=2
                 )
 
                 # Safely extract response with fallback
-                response_text = self_rag_result.get('response') or self._generate_response(
-                    query=query,
-                    retrieved_docs=compressed_docs,
-                    entities=entities,
-                    intent=intent,
-                    context=context
+                response_text = self_rag_result.get("response") or self._generate_response(
+                    query=query, retrieved_docs=compressed_docs, entities=entities, intent=intent, context=context
                 )
-                reflection_scores = self_rag_result.get('reflection_scores', {})
+                reflection_scores = self_rag_result.get("reflection_scores", {})
 
                 logger.info(f"  Reflection scores: {reflection_scores}")
             except Exception as e:
                 logger.warning(f"Self-RAG failed, falling back to standard generation: {e}")
                 response_text = self._generate_response(
-                    query=query,
-                    retrieved_docs=compressed_docs,
-                    entities=entities,
-                    intent=intent,
-                    context=context
+                    query=query, retrieved_docs=compressed_docs, entities=entities, intent=intent, context=context
                 )
                 reflection_scores = None
         else:
             logger.info("Step 4: Standard Generation...")
             response_text = self._generate_response(
-                query=query,
-                retrieved_docs=compressed_docs,
-                entities=entities,
-                intent=intent,
-                context=context
+                query=query, retrieved_docs=compressed_docs, entities=entities, intent=intent, context=context
             )
             reflection_scores = None
 
@@ -189,28 +167,28 @@ class AgenticRAG:
 
         # Prepare result
         result = {
-            'response_text': response_text,
-            'retrieved_docs': [
+            "response_text": response_text,
+            "retrieved_docs": [
                 {
-                    'text': doc.get('text', '')[:200],  # Truncate for response
-                    'score': doc.get('score', 0.0),
-                    'source': doc.get('source', 'unknown'),
-                    'metadata': doc.get('metadata', {})
+                    "text": doc.get("text", "")[:200],  # Truncate for response
+                    "score": doc.get("score", 0.0),
+                    "source": doc.get("source", "unknown"),
+                    "metadata": doc.get("metadata", {}),
                 }
                 for doc in compressed_docs
             ],
-            'entities': entities,
-            'intent': intent,
-            'complexity': complexity,
-            'reflection_scores': reflection_scores,
-            'processing_time': processing_time,
-            'metadata': {
-                'num_retrieved': len(retrieved_docs),
-                'num_re_ranked': len(compressed_docs) if self.enable_reranking else 0,
-                'used_multi_query': use_multi_query,
-                'used_self_rag': use_self_rag_flag,
-                'query_variations': expanded_queries if use_multi_query else [query]
-            }
+            "entities": entities,
+            "intent": intent,
+            "complexity": complexity,
+            "reflection_scores": reflection_scores,
+            "processing_time": processing_time,
+            "metadata": {
+                "num_retrieved": len(retrieved_docs),
+                "num_re_ranked": len(compressed_docs) if self.enable_reranking else 0,
+                "used_multi_query": use_multi_query,
+                "used_self_rag": use_self_rag_flag,
+                "query_variations": expanded_queries if use_multi_query else [query],
+            },
         }
 
         logger.info(f"✓ Processing complete in {processing_time:.2f}s")
@@ -218,12 +196,7 @@ class AgenticRAG:
 
         return result
 
-    def _compress_context(
-        self,
-        documents: List[Dict],
-        query: str,
-        entities: Dict
-    ) -> List[Dict]:
+    def _compress_context(self, documents: List[Dict], query: str, entities: Dict) -> List[Dict]:
         if not documents:
             return []
 
@@ -234,7 +207,7 @@ class AgenticRAG:
         seen_texts = set()
 
         for doc in documents:
-            text = doc.get('text', '')
+            text = doc.get("text", "")
 
             # Skip near-duplicates
             text_hash = hash(text[:100])  # Hash first 100 chars
@@ -246,7 +219,7 @@ class AgenticRAG:
             if len(text) > 1000:
                 # Extract sentences containing query terms
                 query_terms = set(query.lower().split())
-                sentences = text.split('.')
+                sentences = text.split(".")
                 relevant_sentences = []
 
                 for sentence in sentences:
@@ -255,83 +228,68 @@ class AgenticRAG:
                         relevant_sentences.append(sentence)
 
                 if relevant_sentences:
-                    text = '. '.join(relevant_sentences[:3]) + '.'  # Top 3 relevant sentences
+                    text = ". ".join(relevant_sentences[:3]) + "."  # Top 3 relevant sentences
                 else:
                     text = text[:500]  # Just truncate
 
             doc_copy = doc.copy()
-            doc_copy['text'] = text
+            doc_copy["text"] = text
             compressed.append(doc_copy)
 
         return compressed
 
     def _generate_response(
-        self,
-        query: str,
-        retrieved_docs: List[Dict],
-        entities: Dict,
-        intent: Dict,
-        context: Dict
+        self, query: str, retrieved_docs: List[Dict], entities: Dict, intent: Dict, context: Dict
     ) -> str:
 
         if not retrieved_docs:
             return self._handle_no_results(query, entities, intent)
 
         # Get primary intent
-        if isinstance(intent, dict):
-            primary_intent = intent.get('primary', 'information')
-        else:
-            primary_intent = intent
+        primary_intent = intent.get("primary", "information") if isinstance(intent, dict) else intent
 
         # Intent-specific response generation
-        if primary_intent == 'booking':
+        if primary_intent == "booking":
             return self._generate_booking_response(query, retrieved_docs, entities, context)
 
-        elif primary_intent == 'information':
+        elif primary_intent == "information":
             return self._generate_information_response(query, retrieved_docs, entities)
 
-        elif primary_intent == 'availability':
+        elif primary_intent == "availability":
             return self._generate_availability_response(query, retrieved_docs, entities)
 
         else:
             # Generic response
-            context_text = "\n\n".join([doc.get('text', '') for doc in retrieved_docs[:3]])
+            context_text = "\n\n".join([doc.get("text", "") for doc in retrieved_docs[:3]])
             return f"Based on the available information:\n\n{context_text[:500]}"
 
-    def _generate_booking_response(
-        self,
-        query: str,
-        docs: List[Dict],
-        entities: Dict,
-        context: Dict
-    ) -> str:
-
+    def _generate_booking_response(self, query: str, docs: List[Dict], entities: Dict, context: Dict) -> str:
 
         # Check if we have room information from structured query
-        room_docs = [d for d in docs if d.get('source') == 'structured']
+        room_docs = [d for d in docs if d.get("source") == "structured"]
 
         if room_docs:
             # We have real-time room data
             response = "I found the following available rooms:\n\n"
 
             for i, doc in enumerate(room_docs[:3], 1):
-                metadata = doc.get('metadata', {})
+                metadata = doc.get("metadata", {})
                 response += f"{i}. Room {metadata.get('room_number', 'N/A')} "
                 response += f"(Capacity: {metadata.get('capacity', 'N/A')})\n"
 
-                building = metadata.get('building')
+                building = metadata.get("building")
                 if building:
                     response += f"   Location: Building {building}\n"
 
-                features = metadata.get('features', {})
-                feature_list = [k.replace('_', ' ').title() for k, v in features.items() if v]
+                features = metadata.get("features", {})
+                feature_list = [k.replace("_", " ").title() for k, v in features.items() if v]
                 if feature_list:
                     response += f"   Features: {', '.join(feature_list)}\n"
 
                 response += "\n"
 
             # Add booking instructions
-            if entities.get('date') and entities.get('start_time'):
+            if entities.get("date") and entities.get("start_time"):
                 response += "\nTo book, please confirm:\n"
                 response += f"- Date: {entities.get('date')}\n"
                 response += f"- Time: {entities.get('start_time')} - {entities.get('end_time', 'TBD')}\n"
@@ -343,13 +301,13 @@ class AgenticRAG:
             response = "To book a room, I'll need the following information:\n\n"
 
             missing = []
-            if not entities.get('date'):
+            if not entities.get("date"):
                 missing.append("- Date (e.g., tomorrow, 15/03/2026)")
-            if not entities.get('start_time'):
+            if not entities.get("start_time"):
                 missing.append("- Start time (e.g., 2 PM, 14:00)")
-            if not entities.get('end_time'):
+            if not entities.get("end_time"):
                 missing.append("- End time (e.g., 4 PM, 16:00)")
-            if not entities.get('capacity'):
+            if not entities.get("capacity"):
                 missing.append("- Number of people")
 
             if missing:
@@ -359,18 +317,12 @@ class AgenticRAG:
 
         return response
 
-    def _generate_information_response(
-        self,
-        query: str,
-        docs: List[Dict],
-        entities: Dict
-    ) -> str:
-
+    def _generate_information_response(self, query: str, docs: List[Dict], entities: Dict) -> str:
 
         # Combine top documents
         info = []
         for doc in docs[:3]:
-            text = doc.get('text', '').strip()
+            text = doc.get("text", "").strip()
             if text:
                 info.append(text)
 
@@ -384,26 +336,20 @@ class AgenticRAG:
 
         return response
 
-    def _generate_availability_response(
-        self,
-        query: str,
-        docs: List[Dict],
-        entities: Dict
-    ) -> str:
+    def _generate_availability_response(self, query: str, docs: List[Dict], entities: Dict) -> str:
 
+        room_docs = [d for d in docs if d.get("source") == "structured"]
 
-        room_docs = [d for d in docs if d.get('source') == 'structured']
-
-        if room_docs and entities.get('date'):
-            available_count = sum(1 for d in room_docs if d.get('metadata', {}).get('available', False))
+        if room_docs and entities.get("date"):
+            available_count = sum(1 for d in room_docs if d.get("metadata", {}).get("available", False))
 
             response = f"Availability for {entities.get('date')}:\n\n"
 
             if available_count > 0:
                 response += f"✓ {available_count} room(s) available\n\n"
                 for doc in room_docs[:5]:
-                    metadata = doc.get('metadata', {})
-                    if metadata.get('available'):
+                    metadata = doc.get("metadata", {})
+                    if metadata.get("available"):
                         response += f"- Room {metadata.get('room_number')}: Available "
                         response += f"(Capacity: {metadata.get('capacity')})\n"
             else:
@@ -411,27 +357,23 @@ class AgenticRAG:
                 response += "Try different times or dates?"
         else:
             response = "To check availability, please specify:\n"
-            if not entities.get('date'):
+            if not entities.get("date"):
                 response += "- Date\n"
-            if not entities.get('start_time'):
+            if not entities.get("start_time"):
                 response += "- Start time\n"
-            if not entities.get('end_time'):
+            if not entities.get("end_time"):
                 response += "- End time\n"
 
         return response
 
     def _handle_no_results(self, query: str, entities: Dict, intent: Dict) -> str:
 
-
         response = "I couldn't find relevant information for your query. "
 
         # Provide helpful suggestions
-        if isinstance(intent, dict):
-            primary_intent = intent.get('primary')
-        else:
-            primary_intent = intent
+        primary_intent = intent.get("primary") if isinstance(intent, dict) else intent
 
-        if primary_intent == 'booking':
+        if primary_intent == "booking":
             response += "To help you book a room, please provide:\n"
             response += "- Date (e.g., tomorrow, 15/03/2026)\n"
             response += "- Time (e.g., 2-4 PM)\n"
@@ -450,10 +392,10 @@ class AgenticRAG:
         summary_parts = []
 
         for turn in conversation_history[-3:]:  # Last 3 turns
-            role = turn.get('role', 'user')
-            content = turn.get('content', '')
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
 
-            if role == 'user':
+            if role == "user":
                 summary_parts.append(f"User asked: {content[:100]}")
             else:
                 summary_parts.append(f"Assistant: {content[:100]}")
@@ -465,15 +407,10 @@ class AgenticRAG:
 def process_with_agentic_rag(
     query: str,
     vector_store: VectorStore = None,
-    context: Dict = None,
-    user_info: Dict = None,
-    top_k: int = 5
+    context: Dict | None = None,
+    user_info: Dict | None = None,
+    top_k: int = 5,
 ) -> Dict:
 
     rag = AgenticRAG(vector_store=vector_store)
-    return rag.process_query(
-        query=query,
-        context=context,
-        user_info=user_info,
-        top_k=top_k
-    )
+    return rag.process_query(query=query, context=context, user_info=user_info, top_k=top_k)

@@ -6,7 +6,6 @@ from .models import Booking, BookingRule
 
 
 class BookingRuleEnforcer:
-
     def __init__(self):
         self.rules = BookingRule.objects.first()
 
@@ -63,9 +62,7 @@ class BookingRuleEnforcer:
 
         # Daily bookings
         daily_bookings = Booking.objects.filter(
-            user=user,
-            start_time__date=date,
-            status__in=['pending', 'confirmed']
+            user=user, start_time__date=date, status__in=["pending", "confirmed"]
         ).count()
 
         # Weekly bookings
@@ -73,14 +70,12 @@ class BookingRuleEnforcer:
         week_end = week_start + timedelta(days=6)
 
         weekly_bookings = Booking.objects.filter(
-            user=user,
-            start_time__date__range=[week_start, week_end],
-            status__in=['pending', 'confirmed']
+            user=user, start_time__date__range=[week_start, week_end], status__in=["pending", "confirmed"]
         ).count()
 
         return {
-            'daily_bookings': daily_bookings,
-            'daily_limit': self.rules.daily_booking_limit if self.rules else 0,
-            'weekly_bookings': weekly_bookings,
-            'weekly_limit': self.rules.weekly_booking_limit if self.rules else 0,
+            "daily_bookings": daily_bookings,
+            "daily_limit": self.rules.daily_booking_limit if self.rules else 0,
+            "weekly_bookings": weekly_bookings,
+            "weekly_limit": self.rules.weekly_booking_limit if self.rules else 0,
         }

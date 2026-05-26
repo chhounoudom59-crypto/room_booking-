@@ -12,7 +12,7 @@ class _FakeRule:
 
 @pytest.mark.django_db
 def test_booking_rule_enforcer_rejects_long_duration(monkeypatch):
-    monkeypatch.setattr("booking.utils.BookingRule.objects.first", lambda: _FakeRule())
+    monkeypatch.setattr("booking.utils.BookingRule.objects.first", _FakeRule)
 
     enforcer = BookingRuleEnforcer()
     start_time = timezone.now()
@@ -26,7 +26,7 @@ def test_booking_rule_enforcer_rejects_long_duration(monkeypatch):
 
 @pytest.mark.django_db
 def test_booking_rule_enforcer_allows_duration_within_limit(monkeypatch):
-    monkeypatch.setattr("booking.utils.BookingRule.objects.first", lambda: _FakeRule())
+    monkeypatch.setattr("booking.utils.BookingRule.objects.first", _FakeRule)
 
     enforcer = BookingRuleEnforcer()
     start_time = timezone.now()

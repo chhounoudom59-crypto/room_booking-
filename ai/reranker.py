@@ -11,18 +11,21 @@ logger = logging.getLogger(__name__)
 # MODEL LOADING (SAFE)
 # =========================
 
+
 @lru_cache(maxsize=1)
 def get_cross_encoder(model_name: str):
     """
     Singleton model loader to prevent reloading in every request.
     """
     from sentence_transformers import CrossEncoder
+
     return CrossEncoder(model_name)
 
 
 # =========================
 # DOCUMENT NORMALIZATION
 # =========================
+
 
 def normalize_doc(doc: Dict) -> Dict:
     """
@@ -31,7 +34,7 @@ def normalize_doc(doc: Dict) -> Dict:
     return {
         "text": doc.get("text") or doc.get("document", ""),
         "score": doc.get("score", 0.0) or (1 - doc.get("distance", 0.0)),
-        "metadata": doc.get("metadata", {})
+        "metadata": doc.get("metadata", {}),
     }
 
 
@@ -39,8 +42,8 @@ def normalize_doc(doc: Dict) -> Dict:
 # CROSS-ENCODER RERANKER
 # =========================
 
-class DocumentReRanker:
 
+class DocumentReRanker:
     def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
         self.model_name = model_name
         self.model = None
@@ -62,7 +65,7 @@ class DocumentReRanker:
         documents: List[Dict],
         top_k: Optional[int] = None,
         score_field: str = "score",
-        text_field: str = "text"
+        text_field: str = "text",
     ) -> List[Dict]:
 
         if not self.enabled or not documents:
@@ -71,15 +74,12 @@ class DocumentReRanker:
         try:
             normalized_docs = [normalize_doc(d) for d in documents]
 
-            pairs = [
-                [query, doc.get(text_field, "")]
-                for doc in normalized_docs
-            ]
+            pairs = [[query, doc.get(text_field, "")] for doc in normalized_docs]
 
             scores = self.model.predict(pairs)
 
             reranked = []
-            for doc, score in zip(normalized_docs, scores):
+            for doc, score in zip(normalized_docs, scores, strict=False):
                 doc_copy = doc.copy()
                 doc_copy["original_score"] = doc_copy.get(score_field, 0.0)
                 doc_copy[score_field] = float(score)
@@ -105,27 +105,16 @@ class DocumentReRanker:
 # HYBRID RERANKER
 # =========================
 
-class HybridReRanker:
 
-    def __init__(self, cross_encoder_model: str = None):
-        self.cross_encoder = DocumentReRanker(
-            cross_encoder_model or "cross-encoder/ms-marco-MiniLM-L-6-v2"
-        )
+class HybridReRanker:
+    def __init__(self, cross_encoder_model: str | None = None):
+        self.cross_encoder = DocumentReRanker(cross_encoder_model or "cross-encoder/ms-marco-MiniLM-L-6-v2")
 
         # Can be moved to Django settings in production
-        self.weights = {
-            "cross_encoder": 0.5,
-            "retrieval_score": 0.2,
-            "metadata": 0.15,
-            "overlap": 0.15
-        }
+        self.weights = {"cross_encoder": 0.5, "retrieval_score": 0.2, "metadata": 0.15, "overlap": 0.15}
 
     def rerank(
-        self,
-        query: str,
-        documents: List[Dict],
-        top_k: Optional[int] = None,
-        text_field: str = "text"
+        self, query: str, documents: List[Dict], top_k: Optional[int] = None, text_field: str = "text"
     ) -> List[Dict]:
 
         if not documents:
@@ -141,10 +130,10 @@ class HybridReRanker:
             doc["overlap_score"] = overlap_score
 
             doc["hybrid_score"] = (
-                self.weights["cross_encoder"] * doc.get("score", 0.0) +
-                self.weights["retrieval_score"] * doc.get("original_score", 0.0) +
-                self.weights["metadata"] * metadata_score +
-                self.weights["overlap"] * overlap_score
+                self.weights["cross_encoder"] * doc.get("score", 0.0)
+                + self.weights["retrieval_score"] * doc.get("original_score", 0.0)
+                + self.weights["metadata"] * metadata_score
+                + self.weights["overlap"] * overlap_score
             )
 
         docs.sort(key=lambda x: x["hybrid_score"], reverse=True)
@@ -184,10 +173,7 @@ class HybridReRanker:
             q_tokens = set(query.lower().split())
             d_tokens = set(document.lower().split())
 
-            stop_words = {
-                "the", "a", "an", "is", "are", "was", "were",
-                "in", "on", "at", "to", "for"
-            }
+            stop_words = {"the", "a", "an", "is", "are", "was", "were", "in", "on", "at", "to", "for"}
 
             q_tokens -= stop_words
             d_tokens -= stop_words
@@ -205,17 +191,12 @@ class HybridReRanker:
 # MMR RERANKER (SAFE VERSION)
 # =========================
 
-class MMRReRanker:
 
+class MMRReRanker:
     def __init__(self, lambda_param: float = 0.7):
         self.lambda_param = lambda_param
 
-    def rerank(
-        self,
-        documents: List[Dict],
-        top_k: int,
-        score_field: str = "score"
-    ) -> List[Dict]:
+    def rerank(self, documents: List[Dict], top_k: int, score_field: str = "score") -> List[Dict]:
 
         if not documents or top_k <= 0:
             return []
@@ -232,12 +213,7 @@ class MMRReRanker:
             for doc in docs:
                 relevance = doc.get(score_field, 0.0)
 
-                diversity_penalty = max(
-                    [
-                        self._simple_similarity(doc, sel)
-                        for sel in selected
-                    ] or [0.0]
-                )
+                diversity_penalty = max([self._simple_similarity(doc, sel) for sel in selected] or [0.0])
 
                 mmr = self.lambda_param * relevance - (1 - self.lambda_param) * diversity_penalty
 
@@ -264,6 +240,7 @@ class MMRReRanker:
 # =========================
 # FACTORY FUNCTION
 # =========================
+
 
 def rerank_documents(query: str, documents: List[Dict], top_k: int = 5, method: str = "cross_encoder"):
     if method == "cross_encoder":

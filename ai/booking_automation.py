@@ -26,10 +26,7 @@ class BookingAutomation:
             missing = [f for f in required if not criteria.get(f)]
 
             if missing:
-                return {
-                    "valid": False,
-                    "message": f"Missing fields: {', '.join(missing)}"
-                }
+                return {"valid": False, "message": f"Missing fields: {', '.join(missing)}"}
 
             datetime.strptime(criteria["date"], "%Y-%m-%d")
             datetime.strptime(criteria["start_time"], "%H:%M")
@@ -68,16 +65,18 @@ class BookingAutomation:
             score, availability = self._score_room(room, criteria)
 
             if availability["is_available"]:
-                available_rooms.append({
-                    "room": room,
-                    "score": score,
-                    "capacity": room.capacity,
-                    "name": room.name,
-                    "room_number": room.room_number,
-                    "building": getattr(room, "building_name", None) or getattr(room, "building", None),
-                    "availability": availability,
-                    "features": self._get_room_features(room)
-                })
+                available_rooms.append(
+                    {
+                        "room": room,
+                        "score": score,
+                        "capacity": room.capacity,
+                        "name": room.name,
+                        "room_number": room.room_number,
+                        "building": getattr(room, "building_name", None) or getattr(room, "building", None),
+                        "availability": availability,
+                        "features": self._get_room_features(room),
+                    }
+                )
 
         available_rooms.sort(key=lambda x: x["score"], reverse=True)
         return available_rooms[:limit]
@@ -170,27 +169,22 @@ class BookingAutomation:
         except:
             return []
 
-        bookings = self.Booking.objects.filter(
-            room=room,
-            start_time__date=date_obj,
-            status__in=["confirmed"]
-        )
+        bookings = self.Booking.objects.filter(room=room, start_time__date=date_obj, status__in=["confirmed"])
 
         conflicts = []
 
         for booking in bookings:
             if self._times_overlap(
-                start_time,
-                end_time,
-                booking.start_time.strftime("%H:%M"),
-                booking.end_time.strftime("%H:%M")
+                start_time, end_time, booking.start_time.strftime("%H:%M"), booking.end_time.strftime("%H:%M")
             ):
-                conflicts.append({
-                    "booking_id": booking.id,
-                    "start": booking.start_time.strftime("%H:%M"),
-                    "end": booking.end_time.strftime("%H:%M"),
-                    "user": str(booking.user),
-                })
+                conflicts.append(
+                    {
+                        "booking_id": booking.id,
+                        "start": booking.start_time.strftime("%H:%M"),
+                        "end": booking.end_time.strftime("%H:%M"),
+                        "user": str(booking.user),
+                    }
+                )
 
         return conflicts
 
@@ -239,10 +233,7 @@ class BookingAutomation:
         # IMPORTANT FIX: validation first
         validation = self.validate_booking(criteria)
         if not validation["valid"]:
-            return {
-                "success": False,
-                "error": validation["message"]
-            }
+            return {"success": False, "error": validation["message"]}
 
         best_rooms = self.find_best_rooms(criteria, limit=1)
 
@@ -268,25 +259,13 @@ class BookingAutomation:
                 end_dt += timedelta(days=1)
 
         except Exception:
-            return {
-                "success": False,
-                "error": "Invalid date/time format"
-            }
+            return {"success": False, "error": "Invalid date/time format"}
 
         # conflict check
-        conflicts = self._check_conflicts(
-            room,
-            criteria["date"],
-            criteria["start_time"],
-            criteria["end_time"]
-        )
+        conflicts = self._check_conflicts(room, criteria["date"], criteria["start_time"], criteria["end_time"])
 
         if conflicts:
-            return {
-                "success": False,
-                "error": "Room not available",
-                "conflicts": conflicts
-            }
+            return {"success": False, "error": "Room not available", "conflicts": conflicts}
 
         booking = self.Booking.objects.create(
             user=user,
@@ -295,14 +274,14 @@ class BookingAutomation:
             end_time=end_dt,
             purpose=criteria.get("purpose", "meeting"),
             attendees=criteria.get("capacity", 1),
-            additional_notes=criteria.get("raw_message", "")
+            additional_notes=criteria.get("raw_message", ""),
         )
 
         return {
             "success": True,
             "booking": booking,
             "room": best,
-            "message": f"Booking confirmed: {room.name} ({room.room_number})"
+            "message": f"Booking confirmed: {room.name} ({room.room_number})",
         }
 
     # =========================================================
