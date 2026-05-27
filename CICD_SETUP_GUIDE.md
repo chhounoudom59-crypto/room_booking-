@@ -27,6 +27,21 @@ Before the deployment pipelines can push images to Docker Hub, you must configur
 | `DOCKER_USERNAME` | `12345chhounoudom` | Your Docker Hub username. |
 | `DOCKER_PASSWORD` | `dckr_pat_...` | A Docker Hub Access Token. **DO NOT** use your actual password. Create an Access Token in Docker Hub under **Account Settings > Security**. |
 
+### Alternative: Command Line Setup (via GitHub CLI)
+
+If you have the [GitHub CLI (`gh`)](https://cli.github.com/) installed, you can configure these secrets directly from your terminal:
+
+```bash
+# 1. Login to GitHub
+gh auth login
+
+# 2. Set the Docker Username
+echo "12345chhounoudom" | gh secret set DOCKER_USERNAME
+
+# 3. Set the Docker Password (Replace with your actual Access Token)
+echo "your_docker_hub_access_token_here" | gh secret set DOCKER_PASSWORD
+```
+
 > [!WARNING]
 > If these secrets are missing or incorrect, the deployment workflows will fail during the "Log in to Docker Registry" step with an "unauthorized" error.
 
