@@ -1,0 +1,137 @@
+# =====================================================================
+# Unity Build Workflow — CD Pipeline
+#
+# Follows the same tag-driven pattern as the Django CD pipelines:
+#   dev-v*   → Build Unity WebGL for development
+#   stg-v*   → Build Unity WebGL for staging (QA)
+#   prod-v*  → Build Unity WebGL for production + upload to GitHub Release
+#
+# This job runs IN PARALLEL with the Docker CD pipeline (cd.yml) when
+# the same tag is pushed. Both must succeed for the deployment to be
+# considered complete.
+#
+# Required GitHub Secrets:
+#   UNITY_LICENSE  → Your .ulf license file contents
+#   UNITY_EMAIL    → Unity account email
+#   UNITY_PASSWORD → Unity account password
+# =====================================================================
+name: Unity Build CD
+
+# ─────────────────────────────────────────────────────────────────────
+# TRIGGER: Push of a version tag
+# Matches: dev-v1.0.0 | stg-v1.2.3 | prod-v2.0.0 | etc.
+# ─────────────────────────────────────────────────────────────────────
+on:
+  push:
+    tags:
+      - "dev-v*"   # Development environment tags
+      - "stg-v*"   # Staging environment tags
+      - "prod-v*"  # Production environment tags
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════
+  # Job: Build Unity WebGL
+  # Compiles the Unity project into a WebGL build that can be
+  # served by the Django backend or deployed to a static host.
+  # ═══════════════════════════════════════════════════════════════════
+  unity-build:
+    name: Unity WebGL Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout the full repository ───────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for Unity's metadata
+          lfs: true       # Download large binary assets stored in Git LFS
+
+      # ── 2. Determine deployment environment from tag ───────────────
+      # Reads the git tag to decide which environment this build targets.
+      # Output: env.DEPLOY_ENV = "development" | "staging" | "production"
+      - name: Set deployment environment
+        id: env-check
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"          # Strip 'refs/tags/' prefix
+          echo "Git tag: $TAG"
+
+          if [[ "$TAG" == dev-v* ]]; then
+            echo "DEPLOY_ENV=development" >> $GITHUB_ENV
+            echo "BUILD_NAME=unity-dev-build" >> $GITHUB_ENV
+          elif [[ "$TAG" == stg-v* ]]; then
+            echo "DEPLOY_ENV=staging" >> $GITHUB_ENV
+            echo "BUILD_NAME=unity-stg-build" >> $GITHUB_ENV
+          elif [[ "$TAG" == prod-v* ]]; then
+            echo "DEPLOY_ENV=production" >> $GITHUB_ENV
+            echo "BUILD_NAME=unity-prod-build" >> $GITHUB_ENV
+          fi
+
+          echo "Tag=$TAG, Environment=$DEPLOY_ENV"
+
+      # ── 3. Cache Unity Library ────────────────────────────────────
+      # Caches the Unity Library/ import cache between runs.
+      # First run takes ~10 min; cached runs take ~2-3 min.
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: unity_client/Library
+          key: Library-unity_client-ubuntu-${{ hashFiles('unity_client/Assets/**', 'unity_client/Packages/**', 'unity_client/ProjectSettings/**') }}
+          restore-keys: |
+            Library-unity_client-ubuntu-
+            Library-unity_client-
+
+      # ── 4. Build Unity WebGL ──────────────────────────────────────
+      # game-ci/unity-builder@v4 handles:
+      #   • Activating your Unity license
+      #   • Compiling the project for the target platform
+      #   • Placing the output in the 'build/' directory
+      - name: Build Unity WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          # Unity license secrets — add these in GitHub Settings → Secrets
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          # Path to the Unity project (contains Assets/, ProjectSettings/)
+          projectPath: unity_client
+
+          # Unity version — must match ProjectSettings/ProjectVersion.txt
+          unityVersion: 2022.3.21f1
+
+          # Target platform for the build
+          # WebGL → runs in the browser, can be embedded in the Django web app
+          # Other options: StandaloneWindows64 | Android | iOS | StandaloneLinux64
+          targetPlatform: WebGL
+
+          # Output directory for the compiled game files
+          buildsPath: build
+
+      # ── 5. Upload WebGL Build as GitHub Artifact ──────────────────
+      # Saves the compiled game files to GitHub so your team can download
+      # them directly from the Actions tab — no need to build locally.
+      - name: Upload WebGL Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Name shown in the Artifacts section of the Actions run
+          name: ${{ env.BUILD_NAME }}-webgl-${{ github.ref_name }}
+          # The unity-builder action outputs to: build/<projectName>/WebGL/
+          path: build/unity_client/WebGL
+          # Keep the artifact for 30 days (production) or 7 days (dev/stg)
+          retention-days: ${{ env.DEPLOY_ENV == 'production' && 30 || 7 }}
+
+      # ── 6. (Production Only) Copy WebGL build into Django static/ ──
+      # For production: copies the WebGL build into the Django project's
+      # static/ folder so it gets included in the Docker image automatically.
+      # This step only runs when the tag starts with 'prod-v'.
+      - name: Copy WebGL build to Django static folder
+        if: startsWith(github.ref, 'refs/tags/prod-v')
+        run: |
+          # Create the destination directory inside Django's static folder
+          mkdir -p static/unity_game/WebGL
+
+          # Copy all compiled WebGL files to the static folder
+          cp -r build/unity_client/WebGL/* static/unity_game/WebGL/
+
+          echo "✅ WebGL build copied to static/unity_game/WebGL/"
+          ls -la static/unity_game/WebGL/

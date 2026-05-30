@@ -1,0 +1,25 @@
+{
+    "name": "com.intelligentroombooking.tests.editmode",
+    "rootNamespace": "RoomBooking.Tests.EditMode",
+    "references": [
+        "UnityEditor",
+        "UnityEngine",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

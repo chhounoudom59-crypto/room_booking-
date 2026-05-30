@@ -83,3 +83,88 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Job 2: Unity Client — EditMode Unit Tests (runs PARALLEL to django-test)
+  #
+  # Uses GameCI (https://game.ci) — the standard for Unity in GitHub Actions.
+  # GameCI pulls an official Unity Docker image matching your ProjectVersion.txt,
+  # activates the license, then runs your C# NUnit tests inside the engine.
+  #
+  # Required GitHub Secrets (Settings → Secrets → Actions):
+  #   UNITY_LICENSE  → Contents of your .ulf activation file
+  #   UNITY_EMAIL    → Your Unity account email
+  #   UNITY_PASSWORD → Your Unity account password
+  # ═══════════════════════════════════════════════════════════════════
+  unity-test:
+    name: Unity EditMode Tests
+    runs-on: ubuntu-latest   # GameCI Ubuntu images support Unity headlessly
+
+    steps:
+      # ── 1. Checkout the repository ────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so Unity's version-control features work
+          fetch-depth: 0
+          # Use LFS if you store large binary assets (textures, audio, etc.)
+          lfs: true
+
+      # ── 2. Cache Unity Library folder ─────────────────────────────
+      # The Library/ folder is Unity's import cache. Caching it between runs
+      # can reduce Unity startup time from ~10 min → ~2 min on repeated builds.
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: unity_client/Library
+          # Cache key is tied to the project folder and OS
+          key: Library-unity_client-ubuntu-${{ hashFiles('unity_client/Assets/**', 'unity_client/Packages/**', 'unity_client/ProjectSettings/**') }}
+          restore-keys: |
+            Library-unity_client-ubuntu-
+            Library-unity_client-
+
+      # ── 3. Run Unity EditMode Tests ───────────────────────────────
+      # game-ci/unity-test-runner@v4 handles:
+      #   • Pulling the correct Unity Docker image (from ProjectVersion.txt)
+      #   • Activating your Unity license using the secrets
+      #   • Running all NUnit tests under Assets/Tests/EditMode/
+      #   • Outputting an XML test results file (NUnit format)
+      - name: Run Unity EditMode Tests
+        uses: game-ci/unity-test-runner@v4
+        id: unity-tests      # 'id' lets us reference outputs (e.g. artifactsPath) below
+        env:
+          # ── Unity License (required) ──────────────────────────────
+          # Add these three values to your repo's GitHub Secrets
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          # Path to the Unity project root (contains Assets/, ProjectSettings/, etc.)
+          projectPath: unity_client
+
+          # Unity version must match ProjectSettings/ProjectVersion.txt
+          unityVersion: 2022.3.21f1
+
+          # testMode options: EditMode | PlayMode | All
+          # EditMode = fast, no Play Mode runtime needed (best for CI)
+          testMode: EditMode
+
+          # Where to store the NUnit XML test results
+          artifactsPath: unity-test-results
+
+          # Fail this step if ANY test fails
+          checkName: Unity EditMode Test Results
+
+          # Optional: copy test results to GitHub's test-results UI
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 4. Upload Test Results as Artifact ────────────────────────
+      # 'if: always()' ensures results are uploaded even when tests fail,
+      # so you can download and inspect the NUnit XML report.
+      - name: Upload Unity test results
+        uses: actions/upload-artifact@v4
+        if: always()   # Upload even on test failure for debugging
+        with:
+          name: unity-test-results
+          # steps.unity-tests.outputs.artifactsPath is set by unity-test-runner
+          path: ${{ steps.unity-tests.outputs.artifactsPath }}
