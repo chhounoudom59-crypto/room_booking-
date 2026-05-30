@@ -1,0 +1,21 @@
+# =====================================================================
+# Unity License Activation — Run Once Only, Then DELETE This File
+# =====================================================================
+name: "Unity Activation (Run Once)"
+
+on:
+  workflow_dispatch:   # Only runs when YOU manually click "Run workflow"
+
+jobs:
+  activation:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Generate a Unity license request file (.alf)
+      - uses: game-ci/unity-request-activation-file@v2
+        id: get-license
+
+      # Step 2: Upload the .alf file as a downloadable artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Unity_v2022.x.alf
+          path: ${{ steps.get-license.outputs.filePath }}
