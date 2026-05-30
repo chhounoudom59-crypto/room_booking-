@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 from chatbot.controllers.chat_controller import (
     chat_endpoint,
-    confirm_booking,
     chatbot_index,
-    health_check,
     clear_session,
+    confirm_booking,
+    health_check,
 )
 
 # -----------------------------
