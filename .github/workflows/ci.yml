@@ -98,7 +98,8 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════
   unity-test:
     name: Unity EditMode Tests
-    runs-on: ubuntu-latest   # GameCI Ubuntu images support Unity headlessly
+    runs-on: ubuntu-latest
+    if: false  # TEMPORARILY DISABLED until UNITY_LICENSE .ulf file is added to GitHub Secrets
 
     steps:
       # ── 1. Checkout the repository ────────────────────────────────

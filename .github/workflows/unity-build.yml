@@ -37,6 +37,7 @@ jobs:
   unity-build:
     name: Unity WebGL Build
     runs-on: ubuntu-latest
+    if: false  # TEMPORARILY DISABLED until UNITY_LICENSE .ulf file is added to GitHub Secrets
 
     steps:
       # ── 1. Checkout the full repository ───────────────────────────
