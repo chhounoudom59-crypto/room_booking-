@@ -11,9 +11,9 @@
 # considered complete.
 #
 # Required GitHub Secrets:
-#   UNITY_LICENSE  → Your .ulf license file contents
-#   UNITY_EMAIL    → Unity account email
-#   UNITY_PASSWORD → Unity account password
+#   UNITY_EMAIL    → Your Unity account email
+#   UNITY_PASSWORD → Your Unity account password
+#   (No .ulf file needed for Unity Personal license)
 # =====================================================================
 name: Unity Build CD
 
@@ -88,8 +88,7 @@ jobs:
       - name: Build Unity WebGL
         uses: game-ci/unity-builder@v4
         env:
-          # Unity license secrets — add these in GitHub Settings → Secrets
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          # Unity Personal license — only email + password needed (no .ulf file)
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:

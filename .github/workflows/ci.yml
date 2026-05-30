@@ -89,12 +89,12 @@ jobs:
   #
   # Uses GameCI (https://game.ci) — the standard for Unity in GitHub Actions.
   # GameCI pulls an official Unity Docker image matching your ProjectVersion.txt,
-  # activates the license, then runs your C# NUnit tests inside the engine.
+  # activates a Unity Personal license, then runs C# NUnit tests.
   #
   # Required GitHub Secrets (Settings → Secrets → Actions):
-  #   UNITY_LICENSE  → Contents of your .ulf activation file
   #   UNITY_EMAIL    → Your Unity account email
   #   UNITY_PASSWORD → Your Unity account password
+  #   (No .ulf file needed for Unity Personal license)
   # ═══════════════════════════════════════════════════════════════════
   unity-test:
     name: Unity EditMode Tests
@@ -133,9 +133,9 @@ jobs:
         uses: game-ci/unity-test-runner@v4
         id: unity-tests      # 'id' lets us reference outputs (e.g. artifactsPath) below
         env:
-          # ── Unity License (required) ──────────────────────────────
-          # Add these three values to your repo's GitHub Secrets
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          # ── Unity Personal License ────────────────────────────────
+          # For a free Unity Personal account: only email + password needed.
+          # GameCI activates the license automatically via Unity's auth server.
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
