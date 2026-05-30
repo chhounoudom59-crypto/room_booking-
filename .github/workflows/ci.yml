@@ -92,9 +92,9 @@ jobs:
   # activates a Unity Personal license, then runs C# NUnit tests.
   #
   # Required GitHub Secrets (Settings → Secrets → Actions):
+  #   UNITY_LICENSE  → Contents of your .ulf license file (required for Personal)
   #   UNITY_EMAIL    → Your Unity account email
   #   UNITY_PASSWORD → Your Unity account password
-  #   (No .ulf file needed for Unity Personal license)
   # ═══════════════════════════════════════════════════════════════════
   unity-test:
     name: Unity EditMode Tests
@@ -134,8 +134,8 @@ jobs:
         id: unity-tests      # 'id' lets us reference outputs (e.g. artifactsPath) below
         env:
           # ── Unity Personal License ────────────────────────────────
-          # For a free Unity Personal account: only email + password needed.
-          # GameCI activates the license automatically via Unity's auth server.
+          # For a free Unity Personal account, you MUST provide the .ulf file contents.
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
