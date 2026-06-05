@@ -219,15 +219,15 @@
         const rooms = [
             {% for room in rooms_data %}
         {
-            id: { { room.id } },
+            id: {{ room.id }},
             name: "{{ room.name|escapejs }}",
-                location: "{{ room.location|default_if_none:''|escapejs }}",
-                    capacity: { { room.capacity } },
+            location: "{{ room.location|default_if_none:''|escapejs }}",
+            capacity: {{ room.capacity }},
             type: "{{ room.room_type|default_if_none:''|escapejs }}",
-                equipment: "{{ room.equipment|default_if_none:''|escapejs }}",
-                    facilities: "{{ room.facilities|default_if_none:''|escapejs }}",
-                        features: {% if room.equipment %} "{{ room.equipment|escapejs }}".split(', '){% else %} []{% endif %},
-            available: { { room.available | yesno: "true,false" } },
+            equipment: "{{ room.equipment|default_if_none:''|escapejs }}",
+            facilities: "{{ room.facilities|default_if_none:''|escapejs }}",
+            features: {% if room.equipment %} "{{ room.equipment|escapejs }}".split(', '){% else %} []{% endif %},
+            available: {{ room.available|yesno:"true,false" }},
             current_status: "{{ room.current_status|default_if_none:'available'|escapejs }}",
                 description: "{{ room.description|escapejs }}",
                     imageUrl: "{{ room.image_url|escapejs }}",

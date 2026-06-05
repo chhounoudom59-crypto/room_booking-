@@ -27,9 +27,9 @@ pip install -r requirements.txt
 ```
 
 ### Step 3: Run the Server
-Start the development server on port **8001**:
+Start the development server on port **8000** (must match Flutter `lib/constants.dart`):
 ```powershell
-python manage.py runserver 8001
+python manage.py runserver 8000
 ```
 > **Note**: The server must be running for the Mobile App to fetch data and log in.
 
@@ -38,7 +38,7 @@ python manage.py runserver 8001
 ## 3. Running the Flutter Mobile App
 
 UI matches [MobileApp_Intelligence_University_Room_Booking_System](https://github.com/samaolthun/MobileApp_Intelligence_University_Room_Booking_System) (purple theme, drawer, room image cards).  
-Data comes from the **same Django API** as the website (`http://127.0.0.1:8001`).
+Data comes from the **same Django API** as the website (`http://127.0.0.1:8000`).
 
 ### Step 1: Navigate to Flutter Directory
 Open a **new** terminal (keep the backend running) and go to:
@@ -89,16 +89,16 @@ Use these credentials to log in and test all features:
 ## 5. Troubleshooting
 
 *   **Connection Error on Mobile**: If the mobile app cannot connect to the backend, check `flutter_extracted/room_booking_flutter/lib/core/constants/api_constants.dart`.
-    *   For **Chrome/Windows**: Use `http://127.0.0.1:8001`
-    *   For **Android Emulator**: Use `http://10.0.2.2:8001`
-    *   For **Physical Phone**: Use your PC's LAN IP (run `ipconfig`) with port `8001`
+    *   For **Chrome/Windows**: Use `http://127.0.0.1:8000`
+    *   For **Android Emulator**: Use `http://10.0.2.2:8000`
+    *   For **Physical Phone**: Use your PC's LAN IP (run `ipconfig`) with port `8000`
 *   **AI Chatbot Not Responding**:
     1. Log in as **User** (not Administrator) — `lecturer@example.com` / `password123`
     2. `.env`: `AI_ENABLED=True`, `LLM_PROVIDER=huggingface`, `HF_API_TOKEN`, `HF_MODEL=Qwen/Qwen2.5-7B-Instruct`
-    3. Restart Django: `python manage.py runserver 8001`
+    3. Restart Django: `python manage.py runserver 8000`
     4. Hard refresh browser (**Ctrl+F5**)
     5. Click the **purple chat button** (bottom-right) or **Chat Now** on Home
-    6. Check [http://127.0.0.1:8001/chatbot/health/](http://127.0.0.1:8001/chatbot/health/) — `rag_initialized` must be `true`
+    6. Check [http://127.0.0.1:8000/chatbot/health/](http://127.0.0.1:8000/chatbot/health/) — `rag_initialized` must be `true`
     *   **Ollama** alternative: set `LLM_PROVIDER=ollama` and run `ollama serve`
 *   **ModuleNotFoundError: PIL**: Activate the virtual environment first (`.\.venv\Scripts\Activate.ps1`) before running Django commands.
 *   **Database Issues**: If you see "Table not found" errors, run:

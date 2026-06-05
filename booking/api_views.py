@@ -17,6 +17,7 @@ from django.views.decorators.http import require_http_methods
 from accounts.models import User
 
 from .models import Booking, BookingRule, Room
+from .utils import room_image_url
 
 # University booking policy scope (must match web flow enforcement)
 BOOKING_MIN_DURATION_HOURS = 1
@@ -74,13 +75,6 @@ def check_consecutive_booking_limit(user, room, start_datetime, end_datetime):
 # ============================================
 
 
-def _room_image_url(room, request):
-    """Absolute image URL for web and mobile clients."""
-    if room.image:
-        return request.build_absolute_uri(room.image.url)
-    return ""
-
-
 def _serialize_room(room, request):
     return {
         "id": room.id,
@@ -92,7 +86,7 @@ def _serialize_room(room, request):
         "equipment": room.equipment or "",
         "is_available": room.is_available,
         "availability_status": room.availability_status,
-        "image": _room_image_url(room, request),
+        "image": room_image_url(room, request),
     }
 
 

@@ -29,6 +29,7 @@ import contextlib
 
 from accounts.forms import UserUpdateForm
 from booking.models import Announcement, Booking, Room, RoomOccupiedTimeRule
+from booking.utils import room_image_url as _room_image_url_for_request
 
 # Get the custom User model
 User = get_user_model()
@@ -113,7 +114,7 @@ def get_user_role(user):
     if not user.is_authenticated:
         return "Unauthenticated"
 
-    if user.groups.filter(name="Admin").exists():
+    if getattr(user, "is_admin", False) or user.is_superuser or user.is_staff or user.groups.filter(name="Admin").exists():
         return "Admin"
     elif user.groups.filter(name="User").exists():
         return "User"
@@ -151,7 +152,7 @@ def ajax_room_list(request):
                 "auto_status_updates": getattr(room, "auto_status_updates", True),
                 "description": room.description,
                 "equipment": room.equipment,
-                "image_url": room.image.url if hasattr(room, "image") and room.image else "",
+                "image_url": _room_image_url_for_request(room, request),
             }
         )
     return JsonResponse({"rooms": room_list})
@@ -406,11 +407,17 @@ def custom_login_view(request):
             if user is None:
                 user = authenticate(request, email=email, password=password)
         if user is not None:
-            # Check group membership
-            is_admin = user.groups.filter(name="Admin").exists()
-            is_user = user.groups.filter(name="User").exists()
+            # Check group membership or boolean fields
+            is_admin = getattr(user, "is_admin", False) or user.groups.filter(name="Admin").exists() or user.is_superuser or user.is_staff
+            is_user = user.groups.filter(name="User").exists() or not is_admin
 
-            # Validate role selection
+            # Auto-route superusers and staff to admin dashboard regardless of selection
+            if user.is_superuser or user.is_staff or is_admin:
+                login(request, user)
+                messages.success(request, f"Welcome Admin, {user.first_name}!")
+                return redirect("accounts:admin_dashboard")
+            
+            # Validate role selection for regular users
             if selected_role == "admin":
                 if is_admin:
                     login(request, user)
@@ -478,7 +485,7 @@ def user_dashboard_view(request):
                 "availability_status": getattr(room, "availability_status", "available"),
                 "description": room.description
                 or f"Modern {room.get_room_type_display().lower()} with capacity for {room.capacity} people.",
-                "image_url": room.image.url if getattr(room, "image", None) else "",
+                "image_url": _room_image_url_for_request(room, request),
                 "equipment": room.equipment or "",
             }
         )
@@ -629,7 +636,9 @@ def admin_view_rooms_view(request):
                 "is_available": room.is_available,
                 "description": room.description,
                 "equipment": room.equipment,
-                "image_url": room.image.url if getattr(room, "image", None) else "/static/images/default-room.png",
+                "image_url": _room_image_url_for_request(
+                    room, request, default_static="/static/images/default-room.png"
+                ),
             }
         )
 

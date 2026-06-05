@@ -5,6 +5,15 @@ from django.utils import timezone
 from .models import Booking, BookingRule
 
 
+def room_image_url(room, request, default_static=None):
+    """Absolute URL for room photos (web + mobile)."""
+    if getattr(room, "image", None) and room.image:
+        return request.build_absolute_uri(room.image.url)
+    if default_static:
+        return request.build_absolute_uri(default_static)
+    return ""
+
+
 class BookingRuleEnforcer:
     def __init__(self):
         self.rules = BookingRule.objects.first()

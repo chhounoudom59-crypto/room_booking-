@@ -134,5 +134,5 @@ jobs:
           # Copy all compiled WebGL files to the static folder
           cp -r build/unity_client/WebGL/* static/unity_game/WebGL/
 
-          echo "✅ WebGL build copied to static/unity_game/WebGL/"
+          echo " WebGL build copied to static/unity_game/WebGL/"
           ls -la static/unity_game/WebGL/
