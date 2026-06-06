@@ -1,35 +1,19 @@
-import logging
 import os
-from typing import Dict, List, Optional
-
-try:
-    import chromadb
-    from chromadb.config import Settings
-
-    CHROMADB_AVAILABLE = True
-except Exception:
-    chromadb = None
-    Settings = None
-    CHROMADB_AVAILABLE = False
+import logging
+from typing import List, Dict, Optional
+import chromadb
+from chromadb.config import Settings
 
 logger = logging.getLogger(__name__)
 
 
 class VectorStore:
-    """
-    Production-ready vector database wrapper for ChromaDB.
-    Handles knowledge base, room search, and booking policies.
-    """
-
     def __init__(self, persist_directory: Optional[str] = None):
 
-        if not CHROMADB_AVAILABLE:
-            raise RuntimeError(
-                "chromadb is not installed. Install 'chromadb' to enable the vector store "
-                "or avoid constructing VectorStore when AI features are disabled."
-            )
-
-        self.persist_directory = persist_directory or os.getenv("VECTOR_DB_PATH", "./vector_db")
+        self.persist_directory = persist_directory or os.getenv(
+            "VECTOR_DB_PATH",
+            "./vector_db"
+        )
 
         os.makedirs(self.persist_directory, exist_ok=True)
 
@@ -37,7 +21,11 @@ class VectorStore:
 
         # Initialize persistent ChromaDB client
         self.client = chromadb.PersistentClient(
-            path=self.persist_directory, settings=Settings(anonymized_telemetry=False, allow_reset=True)
+            path=self.persist_directory,
+            settings=Settings(
+                anonymized_telemetry=False,
+                allow_reset=True
+            )
         )
 
         # Collections
@@ -45,27 +33,39 @@ class VectorStore:
         self.rooms_collection = self._get_or_create_collection("rooms_info")
         self.policies_collection = self._get_or_create_collection("booking_policies")
 
+
         logger.info("Vector store initialized successfully")
 
     # =========================
     # COLLECTION HANDLING
-    # =========================
-
+    # ========================
     def _get_or_create_collection(self, name: str):
-        return self.client.get_or_create_collection(name=name, metadata={"hnsw:space": "cosine"})
+        return self.client.get_or_create_collection(
+            name=name,
+            metadata={"hnsw:space": "cosine"}
+        )
 
     # =========================
     # DOCUMENT INSERTION
     # =========================
-
-    def add_documents(self, collection_name: str, documents: List[str], metadatas: List[Dict], ids: List[str]) -> bool:
+    def add_documents(
+        self,
+        collection_name: str,
+        documents: List[str],
+        metadatas: List[Dict],
+        ids: List[str]
+    ) -> bool:
 
         if not (len(documents) == len(metadatas) == len(ids)):
             raise ValueError("documents, metadatas, and ids must have same length")
 
         collection = self.client.get_collection(collection_name)
 
-        collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
+        collection.upsert(
+            documents=documents,
+            metadatas=metadatas,
+            ids=ids
+        )
 
         logger.info(f"Inserted {len(documents)} documents into '{collection_name}'")
         return True
@@ -73,7 +73,6 @@ class VectorStore:
     # =========================
     # CORE SEARCH
     # =========================
-
     def search(
         self,
         collection_name: str,
@@ -85,13 +84,15 @@ class VectorStore:
         collection = self.client.get_collection(collection_name)
 
         return collection.query(
-            query_texts=[query_text], n_results=n_results, where=where, include=["documents", "metadatas", "distances"]
+            query_texts=[query_text],
+            n_results=n_results,
+            where=where,
+            include=["documents", "metadatas", "distances"]
         )
 
     # =========================
     # HIGH-LEVEL SEARCH HELPERS
     # =========================
-
     def search_rooms(self, query: str, n_results: int = 10) -> Dict:
         return self.search("rooms_info", query, n_results)
 
@@ -101,21 +102,43 @@ class VectorStore:
     def search_policies(self, query: str, n_results: int = 3) -> Dict:
         return self.search("booking_policies", query, n_results)
 
+    def get_all_documents(self, collection_name: str) -> List[Dict]:
+        """Retrieve all documents from a collection for keyword indexing."""
+        try:
+            collection = self.client.get_collection(collection_name)
+            # Get all documents - don't include 'ids' in the include parameter
+            result = collection.get(include=["documents", "metadatas"])
+            
+            documents = []
+            texts = result.get("documents", [])
+            metadatas = result.get("metadatas", [])
+            
+            for idx, text in enumerate(texts):
+                doc = {
+                    "text": text if text else "",
+                    "metadata": metadatas[idx] if idx < len(metadatas) else {}
+                }
+                documents.append(doc)
+            
+            logger.info(f"Retrieved {len(documents)} documents from collection '{collection_name}'")
+            return documents
+        except Exception as e:
+            logger.error(f"Failed to retrieve documents from '{collection_name}': {e}")
+            return []
+
     # =========================
     # STATS / MONITORING
     # =========================
-
     def get_collection_stats(self) -> Dict[str, int]:
         return {
             "knowledge_base": self.knowledge_collection.count(),
             "rooms_info": self.rooms_collection.count(),
-            "booking_policies": self.policies_collection.count(),
+            "booking_policies": self.policies_collection.count()
         }
 
     # =========================
     # MAINTENANCE
     # =========================
-
     def clear_collection(self, collection_name: str) -> bool:
         try:
             self.client.delete_collection(collection_name)
@@ -145,13 +168,10 @@ class VectorStore:
 # =========================
 # SAFE PRODUCTION SINGLETON
 # =========================
-
 from functools import lru_cache
 
 
 @lru_cache()
 def get_vector_store() -> VectorStore:
-    """
-    Thread-safe singleton (production safe alternative to global variable)
-    """
+    
     return VectorStore()
