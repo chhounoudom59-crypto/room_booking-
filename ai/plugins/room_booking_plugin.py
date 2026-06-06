@@ -159,7 +159,6 @@ class RoomBookingPlugin:
                 f"👉 **Click 'Confirm Booking' to proceed**"
             )
 
-
         except Exception as e:
             logger.exception(f"Error preparing booking: {e}")
             return f"❌ Error preparing booking: {e!s}"

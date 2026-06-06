@@ -119,7 +119,6 @@ async def auto_book(booking_automation, user, criteria: dict):
         # Execute booking
         return await sync_to_async(booking_automation.auto_book, thread_sensitive=True)(user, criteria)
 
-
     except Exception as e:
         logger.exception(f"auto_book failed: {e}")
         user_msg = "❌ An error occurred during booking"
