@@ -1,5 +1,6 @@
 import argparse
 import logging
+
 from ai.ingest_documents import ingest_document
 
 logging.basicConfig(level=logging.INFO)
@@ -14,10 +15,7 @@ def main():
 
     args = parser.parse_args()
 
-    ok = ingest_document(
-        file_path=args.file,
-        collection_name=args.collection
-    )
+    ok = ingest_document(file_path=args.file, collection_name=args.collection)
 
     if not ok:
         logger.error("Ingestion failed")
@@ -28,6 +26,7 @@ def main():
     if args.verify:
         try:
             from ai.vector_store import get_vector_store
+
             vs = get_vector_store()
             stats = vs.get_collection_stats()
             logger.info(f"Vector store stats: {stats}")
@@ -35,5 +34,5 @@ def main():
             logger.error(f"Failed to fetch vector store stats: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

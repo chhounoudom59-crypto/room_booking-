@@ -1,7 +1,8 @@
 import logging
 from typing import Annotated
-from semantic_kernel.functions import kernel_function
+
 from asgiref.sync import sync_to_async
+from semantic_kernel.functions import kernel_function
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,7 @@ class RoomBookingPlugin:
     # 1. FIND AVAILABLE ROOMS
     # -----------------------------
     @kernel_function(
-        name="find_available_rooms",
-        description="Search available rooms. Always call this BEFORE booking."
+        name="find_available_rooms", description="Search available rooms. Always call this BEFORE booking."
     )
     async def find_available_rooms(
         self,
@@ -30,7 +30,7 @@ class RoomBookingPlugin:
             # Validate input
             if not all([date, start_time, end_time]):
                 return "❌ Missing required parameters: date, start_time, end_time (format: YYYY-MM-DD, HH:MM)"
-            
+
             criteria = {
                 "date": date,
                 "start_time": start_time,
@@ -40,16 +40,15 @@ class RoomBookingPlugin:
 
             # Validate date/time format
             from datetime import datetime
+
             try:
                 datetime.strptime(date, "%Y-%m-%d")
                 datetime.strptime(start_time, "%H:%M")
                 datetime.strptime(end_time, "%H:%M")
             except ValueError as ve:
-                return f"❌ Invalid date/time format: {str(ve)}"
+                return f"❌ Invalid date/time format: {ve!s}"
 
-            rooms = await sync_to_async(self.booking_automation.find_best_rooms)(
-                criteria, limit=5
-            )
+            rooms = await sync_to_async(self.booking_automation.find_best_rooms)(criteria, limit=5)
 
             if not rooms:
                 return "❌ No available rooms found. Try different time or capacity."
@@ -68,23 +67,15 @@ class RoomBookingPlugin:
 
         except Exception as e:
             logger.exception(f"Error finding rooms: {e}")
-            return f"❌ Error searching for rooms: {str(e)}"
+            return f"❌ Error searching for rooms: {e!s}"
 
     # -----------------------------
     # 2. ROOM INFO
     # -----------------------------
-    @kernel_function(
-        name="get_room_info",
-        description="Get detailed info of a room by room_number"
-    )
-    async def get_room_info(
-        self,
-        room_number: Annotated[str, "Room number"]
-    ) -> str:
+    @kernel_function(name="get_room_info", description="Get detailed info of a room by room_number")
+    async def get_room_info(self, room_number: Annotated[str, "Room number"]) -> str:
         try:
-            room = await sync_to_async(
-                self.Room.objects.filter(room_number__iexact=room_number).first
-            )()
+            room = await sync_to_async(self.Room.objects.filter(room_number__iexact=room_number).first)()
 
             if not room:
                 return f"Room {room_number} not found."
@@ -96,9 +87,7 @@ class RoomBookingPlugin:
             if hasattr(room, "room_type") and room.room_type:
                 info += f"Type: {room.get_room_type_display()}\n"
 
-            equipment = await sync_to_async(
-                self.booking_automation._get_room_equipment
-            )(room)
+            equipment = await sync_to_async(self.booking_automation._get_room_equipment)(room)
 
             if equipment:
                 info += f"Equipment: {', '.join(equipment)}\n"
@@ -113,8 +102,7 @@ class RoomBookingPlugin:
     # 3. PREPARE BOOKING (SAFE STEP)
     # -----------------------------
     @kernel_function(
-        name="prepare_booking",
-        description="Prepare booking preview. DO NOT create booking yet - return preview only."
+        name="prepare_booking", description="Prepare booking preview. DO NOT create booking yet - return preview only."
     )
     async def prepare_booking(
         self,
@@ -130,12 +118,13 @@ class RoomBookingPlugin:
                 return "❌ Missing required booking information: date, start_time, end_time"
 
             from datetime import datetime
+
             try:
                 datetime.strptime(date, "%Y-%m-%d")
                 datetime.strptime(start_time, "%H:%M")
                 datetime.strptime(end_time, "%H:%M")
             except ValueError as ve:
-                return f"❌ Invalid date/time format: {str(ve)}"
+                return f"❌ Invalid date/time format: {ve!s}"
 
             criteria = {
                 "date": date,
@@ -146,18 +135,15 @@ class RoomBookingPlugin:
             }
 
             # Find best available room without booking
-            rooms = await sync_to_async(self.booking_automation.find_best_rooms)(
-                criteria, limit=1
-            )
+            rooms = await sync_to_async(self.booking_automation.find_best_rooms)(criteria, limit=1)
 
             if not rooms:
                 return f"❌ No rooms available for {date} {start_time}-{end_time}. Try different time."
 
             best_room = rooms[0]["room"]
             equipment = rooms[0].get("equipment", [])
-            capacity_match = best_room.capacity >= int(capacity)
 
-            preview = (
+            return (
                 f"✅ **BOOKING PREVIEW** (Review before confirming)\n\n"
                 f"**Room Details:**\n"
                 f"  • Name: {best_room.name}\n"
@@ -173,18 +159,17 @@ class RoomBookingPlugin:
                 f"👉 **Click 'Confirm Booking' to proceed**"
             )
 
-            return preview
 
         except Exception as e:
             logger.exception(f"Error preparing booking: {e}")
-            return f"❌ Error preparing booking: {str(e)}"
+            return f"❌ Error preparing booking: {e!s}"
 
     # -----------------------------
     # 4. CREATE BOOKING (VALIDATED)
     # -----------------------------
     @kernel_function(
         name="create_booking",
-        description="Execute booking ONLY after user confirmation. Requires all validated details."
+        description="Execute booking ONLY after user confirmation. Requires all validated details.",
     )
     async def create_booking(
         self,
@@ -197,6 +182,7 @@ class RoomBookingPlugin:
     ) -> str:
         try:
             from django.contrib.auth import get_user_model
+
             User = get_user_model()
 
             # Validate all required parameters
@@ -205,12 +191,13 @@ class RoomBookingPlugin:
 
             # Validate date/time format
             from datetime import datetime
+
             try:
                 datetime.strptime(date, "%Y-%m-%d")
                 datetime.strptime(start_time, "%H:%M")
                 datetime.strptime(end_time, "%H:%M")
             except ValueError as ve:
-                return f"❌ Invalid date/time format: {str(ve)}"
+                return f"❌ Invalid date/time format: {ve!s}"
 
             # Get user
             try:
@@ -231,18 +218,14 @@ class RoomBookingPlugin:
             }
 
             # STEP 1: VALIDATE CRITERIA
-            validation = await sync_to_async(
-                self.booking_automation.validate_booking
-            )(criteria)
+            validation = await sync_to_async(self.booking_automation.validate_booking)(criteria)
 
             if not validation.get("valid"):
                 msg = validation.get("message", "Booking failed validation.")
                 return f"❌ Validation Error: {msg}"
 
             # STEP 2: ATTEMPT BOOKING
-            result = await sync_to_async(
-                self.booking_automation.auto_book
-            )(user, criteria)
+            result = await sync_to_async(self.booking_automation.auto_book)(user, criteria)
 
             # Return appropriate response based on result
             if result.get("success"):
@@ -260,21 +243,16 @@ class RoomBookingPlugin:
 
         except Exception as e:
             logger.exception(f"Error creating booking: {e}")
-            return f"❌ Unexpected error during booking: {str(e)}"
+            return f"❌ Unexpected error during booking: {e!s}"
 
     # -----------------------------
     # 5. LIST USER BOOKINGS
     # -----------------------------
-    @kernel_function(
-        name="list_user_bookings",
-        description="List user's confirmed bookings"
-    )
-    async def list_user_bookings(
-        self,
-        user_id: Annotated[str, "Authenticated user ID"]
-    ) -> str:
+    @kernel_function(name="list_user_bookings", description="List user's confirmed bookings")
+    async def list_user_bookings(self, user_id: Annotated[str, "Authenticated user ID"]) -> str:
         try:
             from django.contrib.auth import get_user_model
+
             User = get_user_model()
 
             if not user_id:
@@ -288,12 +266,13 @@ class RoomBookingPlugin:
             if not user:
                 return "❌ User not found."
 
-            bookings = await sync_to_async(lambda: list(
-                self.Booking.objects.filter(
-                    user=user,
-                    status="confirmed"
-                ).select_related("room").order_by("-start_time")[:5]
-            ))()
+            bookings = await sync_to_async(
+                lambda: list(
+                    self.Booking.objects.filter(user=user, status="confirmed")
+                    .select_related("room")
+                    .order_by("-start_time")[:5]
+                )
+            )()
 
             if not bookings:
                 return "📭 You have no confirmed bookings."
@@ -314,4 +293,4 @@ class RoomBookingPlugin:
 
         except Exception as e:
             logger.exception(f"Error listing bookings: {e}")
-            return f"❌ Error retrieving bookings: {str(e)}"
+            return f"❌ Error retrieving bookings: {e!s}"

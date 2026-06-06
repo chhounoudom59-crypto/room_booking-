@@ -5,4 +5,4 @@ imports light-weight to avoid side-effects during Django startup.
 """
 
 # Expose package version (optional)
-__version__ = '0.1.0'
+__version__ = "0.1.0"

@@ -1,12 +1,12 @@
-from typing import Any, Dict, Optional, Tuple
 import json
+from typing import Any, Dict, Optional, Tuple
 
 
 # =========================
 # JSON BODY PARSER
 # =========================
 def parse_json_body(request) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str], int]:
-   
+
     try:
         raw = request.body.decode("utf-8") if request.body else "{}"
         data = json.loads(raw)
@@ -32,7 +32,7 @@ def require_string_field(
     *,
     allow_empty: bool = False,
 ) -> Tuple[bool, Optional[str], Optional[str], int]:
-    
+
     value = payload.get(field)
 
     if value is None:
@@ -48,11 +48,12 @@ def require_string_field(
 
     return True, value, None, 200
 
+
 # =========================
 # OPTIONAL STRING FIELD
 # =========================
 def optional_string(payload: Dict[str, Any], field: str, default: str = "") -> str:
-    
+
     value = payload.get(field, default)
 
     if isinstance(value, str):
@@ -65,7 +66,7 @@ def optional_string(payload: Dict[str, Any], field: str, default: str = "") -> s
 # SLOT VALIDATION
 # =========================
 def validate_update_slots(payload: Dict[str, Any]) -> Dict[str, Any]:
-    
+
     slots = payload.get("update_slots")
 
     if not isinstance(slots, dict):

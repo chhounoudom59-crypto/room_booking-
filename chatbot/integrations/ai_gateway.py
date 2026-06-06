@@ -16,11 +16,14 @@ def initialize_ai_systems(rag_system, booking_system, vector_store=None):
 
     logger.info("AI systems initialized successfully")
 
+
 def get_rag_system():
     return _agentic_rag, _booking_automation
 
+
 def get_vector_store():
     return _vector_store
+
 
 def is_ready():
     return _agentic_rag is not None and _booking_automation is not None

@@ -1,8 +1,8 @@
-import logging
 import json
+import logging
 import re
-from typing import Dict, List, Optional
 from datetime import datetime
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class QueryProcessor:
     # MAIN PIPELINE
     # =========================================================================
 
-    def process_query(self, query: str, context: Dict = None) -> Dict:
+    def process_query(self, query: str, context: Dict | None = None) -> Dict:
         logger.info(f"Processing query: {query[:80]}")
 
         normalized = self._normalize(query)
@@ -54,14 +54,13 @@ class QueryProcessor:
     def _normalize(self, query: str) -> str:
         query = query.lower().strip()
         # Normalize common typo "une" to "june" when specifying dates (e.g. "une 7", "une 7th")
-        query = re.sub(r'\bune\s+(\d+)', r'june \1', query)
-        return query
+        return re.sub(r"\bune\s+(\d+)", r"june \1", query)
 
     # =========================================================================
     # LLM QUERY UNDERSTANDING
     # =========================================================================
 
-    def _llm_understand_query(self, query: str, context: Dict = None) -> Dict:
+    def _llm_understand_query(self, query: str, context: Dict | None = None) -> Dict:
         if not self.llm_client:
             logger.warning("LLM not available, using safe fallback output")
             return self._fallback_output()
@@ -142,7 +141,7 @@ REQUIRED RESPONSE FORMAT:
   "sub_queries": []
 }}
 
-Current reference date/time: {datetime.now().strftime('%Y-%m-%d %A %H:%M')}
+Current reference date/time: {datetime.now().strftime("%Y-%m-%d %A %H:%M")}
 
 Query: "{query}"
 Session context (already collected): {json.dumps({k: v for k, v in (context or {}).items() if v is not None} or {})}
@@ -199,9 +198,7 @@ Return JSON only:
 
         try:
             response = self.llm_client(prompt)
-            data = self._safe_json_parse(
-                response if isinstance(response, str) else str(response)
-            )
+            data = self._safe_json_parse(response if isinstance(response, str) else str(response))
 
             if data.get("has_multiple_intents", False):
                 sub_queries = [q.strip() for q in data.get("sub_queries", []) if q.strip()]
@@ -221,14 +218,12 @@ Return JSON only:
     # =========================================================================
 
     def expand_query(self, query: str, entities: Dict) -> List[str]:
-       
+
         if not self.llm_client:
             logger.warning("Expansion skipped: no LLM client available")
             return [query]
 
-        entity_context = json.dumps(
-            {k: v for k, v in entities.items() if v}, ensure_ascii=False
-        )
+        entity_context = json.dumps({k: v for k, v in entities.items() if v}, ensure_ascii=False)
 
         prompt = f"""Generate 3 alternative phrasings of the following query that preserve \
 its meaning and extracted entities. The rewrites will be used to improve document retrieval, \
@@ -248,9 +243,7 @@ Return JSON only:
 
         try:
             response = self.llm_client(prompt)
-            data = self._safe_json_parse(
-                response if isinstance(response, str) else str(response)
-            )
+            data = self._safe_json_parse(response if isinstance(response, str) else str(response))
 
             rewrites = [q.strip() for q in data.get("expanded_queries", []) if q.strip()]
             # Always keep the original as the first entry
@@ -403,9 +396,7 @@ Return JSON only:
 
         if "attendees" in entities and "capacity" not in entities:
             entities["capacity"] = entities["attendees"]
-            constraints["inferred"].append(
-                f"Inferred capacity = attendees ({entities['attendees']})"
-            )
+            constraints["inferred"].append(f"Inferred capacity = attendees ({entities['attendees']})")
 
         if (
             "capacity" in entities
@@ -413,9 +404,7 @@ Return JSON only:
             and data.get("intent", {}).get("primary") == "booking"
         ):
             entities["attendees"] = entities["capacity"]
-            constraints["inferred"].append(
-                f"Inferred attendees = capacity ({entities['capacity']}) for booking intent"
-            )
+            constraints["inferred"].append(f"Inferred attendees = capacity ({entities['capacity']}) for booking intent")
 
         intent_primary = data.get("intent", {}).get("primary", "information")
 
@@ -442,8 +431,9 @@ Return JSON only:
         logger.info(f"Constraint reasoning: {constraints}")
         return data
 
+
 # =============================================================================
 # FACTORY
 # =============================================================================
-def process_query(query: str, context: Dict = None, llm_client=None) -> Dict:
+def process_query(query: str, context: Dict | None = None, llm_client=None) -> Dict:
     return QueryProcessor(llm_client=llm_client).process_query(query, context)

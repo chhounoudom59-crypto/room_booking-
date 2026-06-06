@@ -5,6 +5,7 @@ from chatbot.integrations.ai_gateway import initialize_ai_systems
 
 logger = logging.getLogger(__name__)
 
+
 class ChatAgent:
     def __init__(self, kernel, booking_automation, room_plugin, llm_client=None):
 
@@ -33,7 +34,7 @@ class ChatAgent:
             vector_store = get_vector_store()
             rag = AgenticRAG(
                 vector_store=vector_store,
-                llm_client=llm_client,   # HuggingFace Inference API client from HuggingFace kernel
+                llm_client=llm_client,  # HuggingFace Inference API client from HuggingFace kernel
                 enable_reranking=True,
                 enable_multi_query=True,
             )
@@ -55,6 +56,7 @@ class ChatAgent:
     @property
     def is_ready(self) -> bool:
         return self._rag_system is not None and self.booking_automation is not None
+
     # =========================
     # HEALTH CHECK
     # =========================
@@ -63,6 +65,7 @@ class ChatAgent:
         vector_stats = {}
         try:
             from ai.vector_store import get_vector_store
+
             vector_stats = get_vector_store().get_collection_stats()
         except Exception as e:
             logger.warning(f"Could not fetch vector store stats: {e}")

@@ -1,6 +1,6 @@
 import logging
-from typing import List, Dict, Optional
 from functools import lru_cache
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +11,18 @@ logger = logging.getLogger(__name__)
 def _jaccard(a: str, b: str) -> float:
     """Token-level Jaccard similarity with stopword removal."""
     _STOPWORDS = {
-        "the", "a", "an", "is", "are", "was", "were",
-        "in", "on", "at", "to", "for",
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
     }
     t1 = set(a.lower().split()) - _STOPWORDS
     t2 = set(b.lower().split()) - _STOPWORDS
@@ -41,6 +51,7 @@ def normalize_doc(doc: Dict) -> Dict:
 def _get_cross_encoder(model_name: str):
     """Load and cache a CrossEncoder by name. One instance per model name."""
     from sentence_transformers import CrossEncoder
+
     return CrossEncoder(model_name)
 
 
@@ -49,6 +60,7 @@ _DEFAULT_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 # =============================================================================
 # CROSS-ENCODER RERANKER
 # =============================================================================
+
 
 class DocumentReRanker:
     def __init__(self, model_name: str = _DEFAULT_MODEL):
@@ -84,7 +96,7 @@ class DocumentReRanker:
             scores = self.model.predict(pairs)
 
             reranked = []
-            for doc, score in zip(normalized, scores):
+            for doc, score in zip(normalized, scores, strict=False):
                 doc_copy = doc.copy()
                 doc_copy["original_score"] = doc_copy.get(score_field, 0.0)
                 doc_copy[score_field] = float(score)
@@ -122,8 +134,8 @@ _DEFAULT_WEIGHTS = {
 class HybridReRanker:
     def __init__(
         self,
-        cross_encoder_model: str = None,
-        weights: Dict[str, float] = None,
+        cross_encoder_model: str | None = None,
+        weights: Dict[str, float] | None = None,
     ):
         self.cross_encoder = DocumentReRanker(cross_encoder_model or _DEFAULT_MODEL)
         self.weights = weights or _DEFAULT_WEIGHTS
@@ -164,6 +176,7 @@ class HybridReRanker:
 # =============================================================================
 # MMR RERANKER
 # =============================================================================
+
 
 class MMRReRanker:
     def __init__(self, lambda_param: float = 0.7):
@@ -218,7 +231,7 @@ def rerank_documents(
     top_k: int = 5,
     method: str = "cross_encoder",
 ) -> List[Dict]:
-  
+
     global _cross_encoder_instance, _hybrid_instance
 
     if method == "cross_encoder":

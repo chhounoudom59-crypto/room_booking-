@@ -1,13 +1,13 @@
 import logging
 import uuid
 
+from asgiref.sync import sync_to_async
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from asgiref.sync import sync_to_async
 
-from chatbot.integrations.ai_gateway import get_rag_system
 from ai.health_monitor import get_health_monitor
+from chatbot.integrations.ai_gateway import get_rag_system
 from chatbot.services.response_service import build_chat_response
 from chatbot.services.session_service import (
     clear_booking_preview,
@@ -32,22 +32,20 @@ logger = logging.getLogger(__name__)
 # =========================
 @require_http_methods(["GET"])
 def chatbot_index(request):
-    return JsonResponse({
-        "service": "chatbot",
-        "status": "ok",
-        "message": "Use /chatbot/chat/ for chat requests.",
-    })
+    return JsonResponse(
+        {
+            "service": "chatbot",
+            "status": "ok",
+            "message": "Use /chatbot/chat/ for chat requests.",
+        }
+    )
 
 
 @require_http_methods(["GET"])
 def health_check(request):
     rag_system, _ = get_rag_system()
-    
-    return JsonResponse({
-        "status": "ok",
-        "rag_initialized": rag_system is not None,
-        "llm_provider": "groq"
-    })
+
+    return JsonResponse({"status": "ok", "rag_initialized": rag_system is not None, "llm_provider": "groq"})
 
 
 # =========================
@@ -100,6 +98,7 @@ async def chat_endpoint(request):
                 _ = u.id
                 return u
             return None
+
         concrete_user = await sync_to_async(resolve_user)(request.user)
 
         user_message = optional_string(body, "message")
@@ -108,15 +107,12 @@ async def chat_endpoint(request):
         session_ctx = await sync_to_async(get_session_context)(session_id)
 
         if not user_message:
-            return JsonResponse({
-                "reply_text": "How can I help you with booking?",
-                "session_id": session_id
-            })
+            return JsonResponse({"reply_text": "How can I help you with booking?", "session_id": session_id})
 
         # =========================
         # GET RAG SYSTEM (for query processing and routing)
         # =========================
-        rag_system, booking_automation = get_rag_system()
+        rag_system, _booking_automation = get_rag_system()
 
         if not rag_system:
             logger.error(
@@ -127,24 +123,24 @@ async def chat_endpoint(request):
                 "   3. Import error in chatbot or AI modules\n"
                 "   Check server logs for full error details."
             )
-            return JsonResponse({
-                "error": "rag_not_initialized",
-                "reply_text": "⚠️ AI system not ready. Check that Groq API key is set in .env file. Restart the server."
-            }, status=503)
+            return JsonResponse(
+                {
+                    "error": "rag_not_initialized",
+                    "reply_text": "⚠️ AI system not ready. Check that Groq API key is set in .env file. Restart the server.",
+                },
+                status=503,
+            )
 
         # =========================
         # EARLY INTENT CLASSIFICATION (LLM only, decides routing)
         # For database queries, route directly to tools instead of running full RAG
         # =========================
-        early_intent = await sync_to_async(rag_system.query_processor.process_query)(
-            user_message, 
-            session_ctx
-        )
-        
+        early_intent = await sync_to_async(rag_system.query_processor.process_query)(user_message, session_ctx)
+
         primary_intent = early_intent.get("intent", {}).get("primary")
         entities = early_intent.get("entities", {})
         intent_confidence = early_intent.get("intent", {}).get("confidence", 0.5)
-        
+
         logger.info(f"Intent classification: {primary_intent} (confidence: {intent_confidence})")
 
         # Accumulate and persist entities in the session context
@@ -184,34 +180,75 @@ async def chat_endpoint(request):
         booking_in_progress = session_ctx.get("booking_in_progress", False)
         if booking_in_progress:
             # Check if new entities contain booking-relevant fields
-            booking_entity_keys = {'date', 'start_time', 'end_time', 'room_type', 'capacity', 'room_number', 'attendees'}
-            new_booking_entities = {k: v for k, v in entities.items()
-                                    if k in booking_entity_keys and v is not None}
+            booking_entity_keys = {
+                "date",
+                "start_time",
+                "end_time",
+                "room_type",
+                "capacity",
+                "room_number",
+                "attendees",
+            }
+            new_booking_entities = {k: v for k, v in entities.items() if k in booking_entity_keys and v is not None}
 
             # Check for time/date keywords in message (e.g. "tomorrow", "9am", "monday")
-            time_keywords = ['today', 'tomorrow', 'monday', 'tuesday', 'wednesday', 'thursday',
-                             'friday', 'saturday', 'sunday', 'am', 'pm', 'morning', 'afternoon',
-                             'evening', 'noon', 'o\'clock', 'next week', 'this week']
-            booking_action_words = ['book', 'reserve', 'yes', 'confirm', 'proceed', 'go ahead',
-                                    'ok', 'okay', 'sure', 'alright', 'sounds good']
+            time_keywords = [
+                "today",
+                "tomorrow",
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+                "am",
+                "pm",
+                "morning",
+                "afternoon",
+                "evening",
+                "noon",
+                "o'clock",
+                "next week",
+                "this week",
+            ]
+            booking_action_words = [
+                "book",
+                "reserve",
+                "yes",
+                "confirm",
+                "proceed",
+                "go ahead",
+                "ok",
+                "okay",
+                "sure",
+                "alright",
+                "sounds good",
+            ]
             msg_lower = user_message.lower()
             has_time_keyword = any(kw in msg_lower for kw in time_keywords)
             has_booking_keyword = any(kw in msg_lower for kw in booking_action_words)
 
             should_continue_booking = (
-                bool(new_booking_entities) or
-                has_time_keyword or
-                has_booking_keyword or
-                primary_intent == "booking"
+                bool(new_booking_entities) or has_time_keyword or has_booking_keyword or primary_intent == "booking"
             )
 
-            if should_continue_booking and primary_intent not in ("cancellation", "modification", "user_profile", "user_history"):
-                logger.info(f"Booking continuation: forcing 'booking' (was: {primary_intent}, new_entities: {list(new_booking_entities.keys())})")
+            if should_continue_booking and primary_intent not in (
+                "cancellation",
+                "modification",
+                "user_profile",
+                "user_history",
+            ):
+                logger.info(
+                    f"Booking continuation: forcing 'booking' (was: {primary_intent}, new_entities: {list(new_booking_entities.keys())})"
+                )
                 primary_intent = "booking"
                 is_database_shortcut = True
             else:
                 # User asked a side question — answer it normally, keep booking state
-                logger.info(f"Booking paused for side question (intent: {primary_intent}). booking_in_progress preserved.")
+                logger.info(
+                    f"Booking paused for side question (intent: {primary_intent}). booking_in_progress preserved."
+                )
 
         response_text = ""
         rooms_payload = None
@@ -227,10 +264,10 @@ async def chat_endpoint(request):
             logger.info(f"✓ Routing to tool calling (bypassing RAG): {primary_intent}")
             from chatbot.services.orchestrator import (
                 handle_availability_query,
-                handle_user_profile,
-                handle_user_history,
                 handle_modify_booking,
                 handle_prepare_booking,
+                handle_user_history,
+                handle_user_profile,
             )
 
             try:
@@ -241,14 +278,20 @@ async def chat_endpoint(request):
                     if availability_result.get("rooms"):
                         rooms_payload = [
                             {
-                                "id": r['room'].id,
-                                "name": r['room'].name,
-                                "room_number": r['room'].room_number,
-                                "capacity": r['room'].capacity,
-                                "room_type": getattr(r['room'], 'room_type', 'other'),
-                                "equipment": [item.strip() for item in r['room'].equipment.replace(',', ' ').split() if item.strip()] if r['room'].equipment else [],
-                                "description": r['room'].description,
-                                "available_until": r.get('available_until', 'End of day')
+                                "id": r["room"].id,
+                                "name": r["room"].name,
+                                "room_number": r["room"].room_number,
+                                "capacity": r["room"].capacity,
+                                "room_type": getattr(r["room"], "room_type", "other"),
+                                "equipment": [
+                                    item.strip()
+                                    for item in r["room"].equipment.replace(",", " ").split()
+                                    if item.strip()
+                                ]
+                                if r["room"].equipment
+                                else [],
+                                "description": r["room"].description,
+                                "available_until": r.get("available_until", "End of day"),
                             }
                             for r in availability_result.get("rooms", [])
                         ]
@@ -257,12 +300,16 @@ async def chat_endpoint(request):
 
                 elif primary_intent == "user_profile":
                     profile_result = await handle_user_profile(concrete_user)
-                    response_text = profile_result.get("response_text", profile_result.get("message", "Could not get profile"))
+                    response_text = profile_result.get(
+                        "response_text", profile_result.get("message", "Could not get profile")
+                    )
                     success = profile_result.get("success", False)
 
                 elif primary_intent == "user_history":
                     history_result = await handle_user_history(concrete_user)
-                    response_text = history_result.get("response_text", history_result.get("message", "Could not get history"))
+                    response_text = history_result.get(
+                        "response_text", history_result.get("message", "Could not get history")
+                    )
                     success = history_result.get("success", False)
 
                 elif primary_intent == "booking":
@@ -277,14 +324,17 @@ async def chat_endpoint(request):
                         # Room found — clear booking flow flag
                         session_ctx.pop("booking_in_progress", None)
                         await sync_to_async(save_session_context)(session_id, session_ctx)
-                        await sync_to_async(set_booking_preview)(session_id, {
-                            "criteria": criteria,
-                            "room_id": preview['room']['id'],
-                            "room_name": preview['room']['name'],
-                            "room_number": preview['room']['room_number'],
-                            "room_capacity": preview['room']['capacity'],
-                            "equipment": preview['room'].get('equipment', []),
-                        })
+                        await sync_to_async(set_booking_preview)(
+                            session_id,
+                            {
+                                "criteria": criteria,
+                                "room_id": preview["room"]["id"],
+                                "room_name": preview["room"]["name"],
+                                "room_number": preview["room"]["room_number"],
+                                "room_capacity": preview["room"]["capacity"],
+                                "equipment": preview["room"].get("equipment", []),
+                            },
+                        )
                     else:
                         # Still waiting for more info — keep booking in progress
                         session_ctx["booking_in_progress"] = True
@@ -301,6 +351,7 @@ async def chat_endpoint(request):
 
                 elif primary_intent == "cancellation":
                     from chatbot.services.orchestrator import handle_cancel_booking
+
                     cancel_result = await handle_cancel_booking(concrete_user, session_ctx)
                     response_text = cancel_result.get("message", "Cancellation failed")
                     success = cancel_result.get("success", False)
@@ -309,7 +360,7 @@ async def chat_endpoint(request):
 
             except Exception as e:
                 logger.exception(f"Tool calling failed for intent {primary_intent}: {e}")
-                is_database_shortcut = False # Fall through to RAG on failure
+                is_database_shortcut = False  # Fall through to RAG on failure
 
         if not is_database_shortcut:
             # =========================
@@ -337,38 +388,48 @@ async def chat_endpoint(request):
             # =========================
             if primary_intent == "user_profile":
                 from chatbot.services.orchestrator import handle_user_profile
+
                 profile_result = await handle_user_profile(concrete_user)
-                response_text = profile_result.get("response_text", profile_result.get("message", "Could not retrieve profile."))
+                response_text = profile_result.get(
+                    "response_text", profile_result.get("message", "Could not retrieve profile.")
+                )
                 success = profile_result.get("success", False)
 
             elif primary_intent == "user_history":
                 from chatbot.services.orchestrator import handle_user_history
+
                 history_result = await handle_user_history(concrete_user)
-                response_text = history_result.get("response_text", history_result.get("message", "Could not retrieve booking history."))
+                response_text = history_result.get(
+                    "response_text", history_result.get("message", "Could not retrieve booking history.")
+                )
                 success = history_result.get("success", False)
 
             elif primary_intent == "booking":
                 # NOTE: No validate_booking_entities gate here.
                 # handle_prepare_booking handles missing fields via LLM clarification.
                 from chatbot.services.orchestrator import handle_prepare_booking
+
                 booking_result = await handle_prepare_booking(accumulated_entities, user_message)
-                success = booking_result.get('success', False)
-                response_text = booking_result.get('message', 'Booking preparation failed')
-                preview = booking_result.get('preview')
-                actions = booking_result.get('actions', [])
-                criteria = booking_result.get('criteria')
+                success = booking_result.get("success", False)
+                response_text = booking_result.get("message", "Booking preparation failed")
+                preview = booking_result.get("preview")
+                actions = booking_result.get("actions", [])
+                criteria = booking_result.get("criteria")
 
                 if success and preview:
                     # Booking found — clear the in-progress flag
                     session_ctx.pop("booking_in_progress", None)
-                    await sync_to_async(set_booking_preview)(session_id, {
-                        "criteria": criteria,
-                        "room_id": preview['room']['id'],
-                        "room_name": preview['room']['name'],
-                        "room_number": preview['room']['room_number'],
-                        "room_capacity": preview['room']['capacity'],
-                        "equipment": preview['room'].get('equipment', []),
-                    })
+                    await sync_to_async(set_booking_preview)(
+                        session_id,
+                        {
+                            "criteria": criteria,
+                            "room_id": preview["room"]["id"],
+                            "room_name": preview["room"]["name"],
+                            "room_number": preview["room"]["room_number"],
+                            "room_capacity": preview["room"]["capacity"],
+                            "equipment": preview["room"].get("equipment", []),
+                        },
+                    )
                     await sync_to_async(save_session_context)(session_id, session_ctx)
                 else:
                     # Still missing info — mark booking as in-progress so next
@@ -380,6 +441,7 @@ async def chat_endpoint(request):
 
             elif primary_intent == "availability":
                 from chatbot.services.orchestrator import handle_availability_query
+
                 availability_result = await handle_availability_query(accumulated_entities, user_message)
                 success = availability_result.get("success", False)
                 response_text = availability_result.get("response_text", "Searching for rooms...")
@@ -387,14 +449,18 @@ async def chat_endpoint(request):
                     rooms = availability_result.get("rooms")
                     rooms_payload = [
                         {
-                            "id": r['room'].id,
-                            "name": r['room'].name,
-                            "room_number": r['room'].room_number,
-                            "capacity": r['room'].capacity,
-                            "room_type": getattr(r['room'], 'room_type', 'other'),
-                            "equipment": [item.strip() for item in r['room'].equipment.replace(',', ' ').split() if item.strip()] if r['room'].equipment else [],
-                            "description": r['room'].description,
-                            "available_until": r.get('available_until', 'End of day')
+                            "id": r["room"].id,
+                            "name": r["room"].name,
+                            "room_number": r["room"].room_number,
+                            "capacity": r["room"].capacity,
+                            "room_type": getattr(r["room"], "room_type", "other"),
+                            "equipment": [
+                                item.strip() for item in r["room"].equipment.replace(",", " ").split() if item.strip()
+                            ]
+                            if r["room"].equipment
+                            else [],
+                            "description": r["room"].description,
+                            "available_until": r.get("available_until", "End of day"),
                         }
                         for r in rooms
                     ]
@@ -402,6 +468,7 @@ async def chat_endpoint(request):
 
             elif primary_intent == "modification":
                 from chatbot.services.orchestrator import handle_modify_booking
+
                 mod_result = await handle_modify_booking(concrete_user, accumulated_entities, session_ctx)
                 success = mod_result.get("success", False)
                 response_text = mod_result.get("message", "Could not process modification request.")
@@ -423,22 +490,31 @@ async def chat_endpoint(request):
         mentioned_room_number = accumulated_entities.get("room_number")
         if mentioned_room_number and not rooms_payload:
             from booking.models import Room
+
             room_obj = await sync_to_async(
                 lambda: Room.objects.filter(room_number__iexact=mentioned_room_number, is_available=True).first()
             )()
             if room_obj:
                 equipment_list = await sync_to_async(
-                    lambda: [item.strip() for item in room_obj.equipment.replace(',', ' ').split() if item.strip()] if room_obj.equipment else []
+                    lambda: (
+                        [item.strip() for item in room_obj.equipment.replace(",", " ").split() if item.strip()]
+                        if room_obj.equipment
+                        else []
+                    )
                 )()
-                rooms_payload = [{
-                    "id": room_obj.id,
-                    "name": room_obj.name,
-                    "room_number": room_obj.room_number,
-                    "capacity": room_obj.capacity,
-                    "room_type": room_obj.get_room_type_display() if hasattr(room_obj, "get_room_type_display") else room_obj.room_type,
-                    "equipment": equipment_list,
-                    "description": room_obj.description
-                }]
+                rooms_payload = [
+                    {
+                        "id": room_obj.id,
+                        "name": room_obj.name,
+                        "room_number": room_obj.room_number,
+                        "capacity": room_obj.capacity,
+                        "room_type": room_obj.get_room_type_display()
+                        if hasattr(room_obj, "get_room_type_display")
+                        else room_obj.room_type,
+                        "equipment": equipment_list,
+                        "description": room_obj.description,
+                    }
+                ]
 
         # =========================
         # RESPONSE BUILDING
@@ -464,10 +540,7 @@ async def chat_endpoint(request):
 
     except Exception as e:
         logger.exception(e)
-        return JsonResponse({
-            "error": "internal_error",
-            "reply_text": "Something went wrong."
-        }, status=500)
+        return JsonResponse({"error": "internal_error", "reply_text": "Something went wrong."}, status=500)
 
 
 # =========================
@@ -477,7 +550,7 @@ async def chat_endpoint(request):
 @require_http_methods(["POST"])
 async def confirm_booking(request):
     from chatbot.services.orchestrator import handle_confirm_booking
-    
+
     ok, body, err, status = parse_json_body(request)
     if not ok:
         return JsonResponse({"error": err}, status=status)
@@ -493,6 +566,7 @@ async def confirm_booking(request):
             _ = u.id
             return u
         return None
+
     concrete_user = await sync_to_async(resolve_user)(request.user)
 
     preview = await sync_to_async(get_booking_preview)(session_id)
@@ -522,11 +596,9 @@ async def confirm_booking(request):
         "user_message": result.get("user_message"),
     }
 
-    return JsonResponse({
-        "reply_text": result.get("user_message", "Booking confirmed"),
-        "result": safe_result,
-        "session_id": session_id
-    })
+    return JsonResponse(
+        {"reply_text": result.get("user_message", "Booking confirmed"), "result": safe_result, "session_id": session_id}
+    )
 
 
 # =========================
@@ -536,7 +608,7 @@ async def confirm_booking(request):
 @require_http_methods(["POST"])
 async def update_booking_preview(request):
     from chatbot.services.orchestrator import handle_prepare_booking
-    
+
     ok, body, err, status = parse_json_body(request)
     if not ok:
         return JsonResponse({"error": err, "reply_text": "Invalid request format."}, status=status)
@@ -547,7 +619,7 @@ async def update_booking_preview(request):
 
     # Get existing session context
     session_ctx = await sync_to_async(get_session_context)(session_id)
-    
+
     # Read the updated fields from payload
     new_date = optional_string(body, "date")
     new_start_time = optional_string(body, "start_time")
@@ -555,22 +627,27 @@ async def update_booking_preview(request):
     new_capacity = body.get("capacity")
     new_purpose = optional_string(body, "purpose")
     new_notes = optional_string(body, "additional_notes")
-    
+
     # Update session context with explicit new values
-    if new_date: session_ctx["date"] = new_date
-    if new_start_time: session_ctx["start_time"] = new_start_time
-    if new_end_time: session_ctx["end_time"] = new_end_time
+    if new_date:
+        session_ctx["date"] = new_date
+    if new_start_time:
+        session_ctx["start_time"] = new_start_time
+    if new_end_time:
+        session_ctx["end_time"] = new_end_time
     if new_capacity is not None:
         try:
             session_ctx["capacity"] = int(new_capacity)
             session_ctx["attendees"] = int(new_capacity)
         except (ValueError, TypeError):
             pass
-    if new_purpose: session_ctx["purpose"] = new_purpose
-    if new_notes is not None: session_ctx["additional_notes"] = new_notes
-    
+    if new_purpose:
+        session_ctx["purpose"] = new_purpose
+    if new_notes is not None:
+        session_ctx["additional_notes"] = new_notes
+
     await sync_to_async(save_session_context)(session_id, session_ctx)
-    
+
     # Re-prepare booking with the updated criteria
     booking_result = await handle_prepare_booking(session_ctx, "Update booking request")
     success = booking_result.get("success", False)
@@ -578,22 +655,27 @@ async def update_booking_preview(request):
     preview = booking_result.get("preview")
     actions = booking_result.get("actions", [])
     criteria = booking_result.get("criteria")
-    
+
     if success and preview:
-        await sync_to_async(set_booking_preview)(session_id, {
-            "criteria": criteria,
-            "room_id": preview['room']['id'],
-            "room_name": preview['room']['name'],
-            "room_number": preview['room']['room_number'],
-            "room_capacity": preview['room']['capacity'],
-            "equipment": preview['room'].get('equipment', []),
-        })
-    
-    return JsonResponse({
-        "success": success,
-        "reply_text": message,
-        "data": preview,
-        "actions": actions,
-        "booking_criteria": criteria,
-        "session_id": session_id
-    })
+        await sync_to_async(set_booking_preview)(
+            session_id,
+            {
+                "criteria": criteria,
+                "room_id": preview["room"]["id"],
+                "room_name": preview["room"]["name"],
+                "room_number": preview["room"]["room_number"],
+                "room_capacity": preview["room"]["capacity"],
+                "equipment": preview["room"].get("equipment", []),
+            },
+        )
+
+    return JsonResponse(
+        {
+            "success": success,
+            "reply_text": message,
+            "data": preview,
+            "actions": actions,
+            "booking_criteria": criteria,
+            "session_id": session_id,
+        }
+    )

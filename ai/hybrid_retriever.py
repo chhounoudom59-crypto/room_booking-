@@ -1,7 +1,7 @@
 import logging
-from typing import List, Dict, Optional
-from collections import defaultdict
 import math
+from collections import defaultdict
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -21,20 +21,20 @@ class HybridRetriever:
     def __init__(
         self,
         vector_store=None,
-        keyword_index=None,      # reserved for BM25 index (future)
-        database_client=None,    # reserved for Django ORM queries (future)
+        keyword_index=None,  # reserved for BM25 index (future)
+        database_client=None,  # reserved for Django ORM queries (future)
     ):
         self.vector_store = vector_store
         self.keyword_index = keyword_index
         self.database_client = database_client
-        
+
         # Initialize keyword index as None
         self._documents = None
         self._doc_term_freq = None
         self._doc_lengths = None
         self._idf_scores = None
         self._vocabulary = None
-        
+
         # Lazy-load documents from vector store if available
         self._documents_loaded = False
 
@@ -42,7 +42,7 @@ class HybridRetriever:
     def retrieve(
         self,
         query: str,
-        entities: Dict = None,
+        entities: Dict | None = None,
         intent=None,
         top_k: int = 5,
         use_query_routing: bool = True,
@@ -71,14 +71,14 @@ class HybridRetriever:
         """Lazy-load documents from vector store if not already loaded."""
         if self._documents_loaded or not self.vector_store:
             return
-        
+
         try:
             # Try to load from multiple collections
             documents = []
             for collection_name in ["knowledge_base", "booking_policies", "rooms_info"]:
                 docs = self.vector_store.get_all_documents(collection_name)
                 documents.extend(docs)
-            
+
             if documents:
                 self.load_documents(documents)
                 logger.info(f"Lazy-loaded {len(documents)} documents from vector store")
@@ -92,28 +92,28 @@ class HybridRetriever:
     def _build_keyword_index(self, documents: List[Dict]):
         """Build TF-IDF index from documents for better keyword search."""
         self._doc_term_freq = []  # Term frequency per document
-        self._doc_lengths = []     # Document lengths (in tokens)
-        self._idf_scores = {}      # IDF scores for each term
-        self._vocabulary = set()   # All unique terms
-        
+        self._doc_lengths = []  # Document lengths (in tokens)
+        self._idf_scores = {}  # IDF scores for each term
+        self._vocabulary = set()  # All unique terms
+
         if not documents:
             return
-        
+
         # First pass: collect all terms and compute document frequencies
         term_doc_count = defaultdict(int)
         doc_tokens_list = []
-        
+
         for doc in documents:
             text = doc.get("text", "").lower()
             tokens = self._tokenize(text)
             doc_tokens_list.append(tokens)
             self._doc_lengths.append(len(tokens))
-            
+
             unique_terms = set(tokens)
             for term in unique_terms:
                 term_doc_count[term] += 1
             self._vocabulary.update(unique_terms)
-        
+
         # Second pass: compute IDF scores
         num_docs = len(documents)
         for term in self._vocabulary:
@@ -121,16 +121,15 @@ class HybridRetriever:
             # IDF = log(N / df)
             idf = math.log(num_docs / max(1, doc_freq))
             self._idf_scores[term] = idf
-        
+
         # Third pass: compute term frequencies per document
         for tokens in doc_tokens_list:
             term_freq = defaultdict(int)
             for token in tokens:
                 term_freq[token] += 1
             self._doc_term_freq.append(dict(term_freq))
-        
-        logger.debug(f"Built keyword index: {len(self._vocabulary)} unique terms, "
-                    f"{len(self._idf_scores)} IDF scores")
+
+        logger.debug(f"Built keyword index: {len(self._vocabulary)} unique terms, {len(self._idf_scores)} IDF scores")
 
     def _tokenize(self, text: str) -> List[str]:
         """Simple tokenization: lowercase and split by whitespace."""
@@ -174,7 +173,7 @@ class HybridRetriever:
         """Search documents using TF-IDF scoring."""
         # Lazy-load documents if not already loaded
         self._lazy_load_documents()
-        
+
         documents = getattr(self, "_documents", None)
         if not documents:
             return []
@@ -188,34 +187,34 @@ class HybridRetriever:
             return self._simple_keyword_search(query, top_k)
 
         scored_docs = []
-        
+
         for doc_idx, doc in enumerate(documents):
             if doc_idx >= len(self._doc_term_freq):
                 continue
-                
+
             term_freq = self._doc_term_freq[doc_idx]
             doc_length = self._doc_lengths[doc_idx] if doc_idx < len(self._doc_lengths) else 1
-            
+
             # Compute TF-IDF score for this document
             score = 0.0
             for token in query_tokens:
                 tf = term_freq.get(token, 0)
                 idf = self._idf_scores.get(token, 0.0)
-                
+
                 # TF-IDF with length normalization
                 if doc_length > 0:
                     tfidf = (tf / doc_length) * idf
                     score += tfidf
-            
+
             if score > 0:
                 # Normalize score to [0, _KEYWORD_SCORE_CEILING]
                 normalized_score = min(score / max(1.0, len(query_tokens)), _KEYWORD_SCORE_CEILING)
-                
+
                 doc_copy = doc.copy()
                 doc_copy["score"] = normalized_score
                 doc_copy["source"] = "keyword"
                 scored_docs.append(doc_copy)
-        
+
         scored_docs.sort(key=lambda x: x["score"], reverse=True)
         return scored_docs[:top_k]
 
@@ -243,7 +242,7 @@ class HybridRetriever:
             # Jaccard similarity: intersection / union
             union_size = len(query_tokens | doc_tokens)
             jaccard = overlap / union_size if union_size > 0 else 0.0
-            
+
             # Scale to [0, _KEYWORD_SCORE_CEILING]
             score = jaccard * _KEYWORD_SCORE_CEILING
 
@@ -261,7 +260,7 @@ class HybridRetriever:
         vector_docs: List[Dict],
         keyword_docs: List[Dict],
     ) -> List[Dict]:
-       
+
         merged: Dict[str, Dict] = {}
 
         for doc in vector_docs:
@@ -280,7 +279,7 @@ class HybridRetriever:
 
     # ── ChromaDB normalizer ───────────────────────────────────────────────────
     def _normalize_chroma_results(self, raw: Dict, source: str = "vector") -> List[Dict]:
-       
+
         if not raw:
             return []
 
@@ -291,15 +290,17 @@ class HybridRetriever:
         results = []
         for i, text in enumerate(documents):
             distance = distances[i] if i < len(distances) else 1.0
-            score = max(0.0, 1.0 - distance)   # cosine distance → similarity
+            score = max(0.0, 1.0 - distance)  # cosine distance → similarity
 
-            results.append({
-                "text": text or "",
-                "document": text or "",         # SelfRAG compatibility alias
-                "metadata": metadatas[i] if i < len(metadatas) else {},
-                "score": score,
-                "source": source,
-            })
+            results.append(
+                {
+                    "text": text or "",
+                    "document": text or "",  # SelfRAG compatibility alias
+                    "metadata": metadatas[i] if i < len(metadatas) else {},
+                    "score": score,
+                    "source": source,
+                }
+            )
 
         return results
 
@@ -315,14 +316,14 @@ class MultiQueryRetriever:
     def retrieve(
         self,
         query: str,
-        query_variations: List[str] = None,
-        entities: Dict = None,
+        query_variations: List[str] | None = None,
+        entities: Dict | None = None,
         intent=None,
         top_k: int = 5,
     ) -> List[Dict]:
 
         entities = entities or {}
-        queries = (query_variations or [query])[:self.num_queries]
+        queries = (query_variations or [query])[: self.num_queries]
 
         logger.info(f"MultiQueryRetriever: running {len(queries)} query variations")
 
@@ -342,8 +343,7 @@ class MultiQueryRetriever:
                         # Docs appearing in multiple query variations are likely
                         # more relevant; apply a bounded boost per extra hit.
                         all_docs[key]["score"] = (
-                            all_docs[key].get("score", 0.0)
-                            + doc.get("score", 0.0) * _MULTI_QUERY_BOOST
+                            all_docs[key].get("score", 0.0) + doc.get("score", 0.0) * _MULTI_QUERY_BOOST
                         )
                         all_docs[key]["source"] = "multi_query"
                     else:

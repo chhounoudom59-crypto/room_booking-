@@ -1,12 +1,13 @@
-import logging
-from typing import Dict, List, Optional
-from datetime import datetime
 import json
+import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+from ai.hybrid_retriever import HybridRetriever, MultiQueryRetriever
 
 # Import RAG components
 from ai.query_processor import QueryProcessor
-from ai.hybrid_retriever import HybridRetriever, MultiQueryRetriever
-from ai.reranker import HybridReRanker, DocumentReRanker
+from ai.reranker import DocumentReRanker, HybridReRanker
 from ai.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -30,13 +31,12 @@ Guidelines:
 
 
 class AgenticRAG:
-
     def __init__(
         self,
         vector_store: VectorStore = None,
         llm_client=None,
         enable_reranking: bool = True,
-        enable_multi_query: bool = True
+        enable_multi_query: bool = True,
     ):
         self.vector_store = vector_store or VectorStore()
         self.llm_client = llm_client
@@ -49,11 +49,7 @@ class AgenticRAG:
 
         self.query_processor = QueryProcessor(llm_client)
 
-        self.retriever = HybridRetriever(
-            vector_store=self.vector_store,
-            keyword_index=None,
-            database_client=None
-        )
+        self.retriever = HybridRetriever(vector_store=self.vector_store, keyword_index=None, database_client=None)
 
         if self.enable_multi_query:
             self.multi_query_retriever = MultiQueryRetriever(self.retriever, num_queries=3)
@@ -67,16 +63,15 @@ class AgenticRAG:
                 self.enable_reranking = False
 
         logger.info(
-            f"  Agentic RAG initialized "
-            f"(Re-ranking: {self.enable_reranking}, Multi-Query: {self.enable_multi_query})"
+            f"  Agentic RAG initialized (Re-ranking: {self.enable_reranking}, Multi-Query: {self.enable_multi_query})"
         )
 
     def process_query(
         self,
         query: str,
-        context: Dict = None,
-        conversation_history: List[Dict] = None,
-        user_info: Dict = None,
+        context: Dict | None = None,
+        conversation_history: List[Dict] | None = None,
+        user_info: Dict | None = None,
         top_k: int = 5,
     ) -> Dict:
 
@@ -207,10 +202,7 @@ class AgenticRAG:
             if len(text) > 1000:
                 query_terms = set(query.lower().split())
                 sentences = text.split(".")
-                relevant = [
-                    s for s in sentences
-                    if query_terms & set(s.lower().split())
-                ]
+                relevant = [s for s in sentences if query_terms & set(s.lower().split())]
                 text = ". ".join(relevant[:3]) + "." if relevant else text[:500]
 
             doc_copy = doc.copy()
@@ -227,9 +219,9 @@ class AgenticRAG:
         entities: Dict,
         intent: Dict,
         context: Dict,
-        conversation_history: List[Dict] = None,
+        conversation_history: List[Dict] | None = None,
     ) -> str:
-       
+
         if not self.llm_client:
             logger.warning("No LLM client configured — returning fallback response.")
             return self._fallback_no_llm(retrieved_docs)
@@ -255,11 +247,10 @@ class AgenticRAG:
         messages.append({"role": "user", "content": user_prompt})
 
         try:
-            response_text = self.llm_client.generate(
+            return self.llm_client.generate(
                 system=GENERATION_SYSTEM_PROMPT,
                 messages=messages,
             )
-            return response_text
         except Exception as e:
             logger.error(f"LLM generation failed: {e}", exc_info=True)
             return self._fallback_no_llm(retrieved_docs)
@@ -272,7 +263,7 @@ class AgenticRAG:
         intent: Dict,
         context: Dict,
     ) -> str:
-        
+
         # Serialise retrieved documents
         docs_block = ""
         if retrieved_docs:
@@ -287,10 +278,16 @@ class AgenticRAG:
                 if metadata:
                     # Flatten key metadata fields for the model to reason over
                     meta_str = ", ".join(
-                        f"{k}={v}" for k, v in metadata.items()
-                        if k in (
-                            "room_number", "capacity", "room_type",
-                            "equipment", "available", "floor",
+                        f"{k}={v}"
+                        for k, v in metadata.items()
+                        if k
+                        in (
+                            "room_number",
+                            "capacity",
+                            "room_type",
+                            "equipment",
+                            "available",
+                            "floor",
                         )
                     )
                     if meta_str:
@@ -304,11 +301,7 @@ class AgenticRAG:
         entity_items = {k: v for k, v in entities.items() if v}
         entities_str = json.dumps(entity_items, ensure_ascii=False) if entity_items else "{}"
 
-        intent_str = (
-            intent.get("primary", "unknown")
-            if isinstance(intent, dict)
-            else str(intent)
-        )
+        intent_str = intent.get("primary", "unknown") if isinstance(intent, dict) else str(intent)
 
         extra_context = ""
         if context:
@@ -326,10 +319,7 @@ class AgenticRAG:
     # ── Fallbacks ─────────────────────────────────────────────────────────────
     def _fallback_no_llm(self, retrieved_docs: List[Dict]) -> str:
         if not retrieved_docs:
-            return (
-                "I couldn't find relevant information for your query. "
-                "Could you rephrase or provide more details?"
-            )
+            return "I couldn't find relevant information for your query. Could you rephrase or provide more details?"
         snippets = [doc.get("text", "").strip() for doc in retrieved_docs[:3] if doc.get("text")]
         return "Based on the available information:\n\n" + "\n\n".join(snippets)
 
@@ -355,8 +345,8 @@ class AgenticRAG:
 def process_with_agentic_rag(
     query: str,
     vector_store: VectorStore = None,
-    context: Dict = None,
-    user_info: Dict = None,
+    context: Dict | None = None,
+    user_info: Dict | None = None,
     top_k: int = 5,
 ) -> Dict:
     rag = AgenticRAG(vector_store=vector_store)
