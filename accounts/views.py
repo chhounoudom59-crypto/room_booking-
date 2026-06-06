@@ -114,7 +114,12 @@ def get_user_role(user):
     if not user.is_authenticated:
         return "Unauthenticated"
 
-    if getattr(user, "is_admin", False) or user.is_superuser or user.is_staff or user.groups.filter(name="Admin").exists():
+    if (
+        getattr(user, "is_admin", False)
+        or user.is_superuser
+        or user.is_staff
+        or user.groups.filter(name="Admin").exists()
+    ):
         return "Admin"
     elif user.groups.filter(name="User").exists():
         return "User"
@@ -408,7 +413,12 @@ def custom_login_view(request):
                 user = authenticate(request, email=email, password=password)
         if user is not None:
             # Check group membership or boolean fields
-            is_admin = getattr(user, "is_admin", False) or user.groups.filter(name="Admin").exists() or user.is_superuser or user.is_staff
+            is_admin = (
+                getattr(user, "is_admin", False)
+                or user.groups.filter(name="Admin").exists()
+                or user.is_superuser
+                or user.is_staff
+            )
             is_user = user.groups.filter(name="User").exists() or not is_admin
 
             # Auto-route superusers and staff to admin dashboard regardless of selection
@@ -416,7 +426,7 @@ def custom_login_view(request):
                 login(request, user)
                 messages.success(request, f"Welcome Admin, {user.first_name}!")
                 return redirect("accounts:admin_dashboard")
-            
+
             # Validate role selection for regular users
             if selected_role == "admin":
                 if is_admin:
