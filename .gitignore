@@ -35,8 +35,6 @@ local_settings.py
 # Env variants
 .env.local
 .env.*
-!.env.example
-!.env.docker.example
 
 # IDEs
 .idea/
@@ -51,3 +49,17 @@ coverage.xml
 # OS files
 .DS_Store
 Thumbs.db
+
+# GitHub
+.github/
+
+# Markdown files
+*.md
+
+# Backup files
+*.bak
+
+# Ignore all folders except ai and chatbot
+/*/
+!/ai/
+!/chatbot/

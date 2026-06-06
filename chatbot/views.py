@@ -1,80 +1,131 @@
-import logging
-
-from asgiref.sync import async_to_sync
-from django.http import JsonResponse
-from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect
+from asgiref.sync import async_to_sync
+import logging
 
 logger = logging.getLogger(__name__)
 
 from chatbot.controllers.chat_controller import (
-    chat_endpoint,
     chatbot_index,
-    clear_session,
-    confirm_booking,
     health_check,
+    clear_session,
+    chat_endpoint,
+    confirm_booking,
+    update_booking_preview,
 )
 
-# -----------------------------
-# Chat Endpoint - Handles Both GET and POST
-# -----------------------------
+# Sync views - pass through directly
+@csrf_exempt
+def index_view(request):
+    """Sync wrapper for async-aware handler"""
+    return chatbot_index(request)
 
 
 @csrf_exempt
+def health_view(request):
+    """Sync view for health check"""
+    return health_check(request)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def clear_view(request):
+    """Sync view for clearing session"""
+    return clear_session(request)
+
+
+# Async views - properly wrapped
+@csrf_exempt
+@require_http_methods(["GET", "POST", "OPTIONS"])
 def chat_page_get(request):
-    """
-    Chat endpoint that handles both GET and POST.
-    - GET: Redirect to chatbot UI (/)
-    - POST: Process chat message through async endpoint
-    """
+    """Async chat endpoint handler"""
     if request.method == "GET":
         # Redirect GET requests to the main chatbot UI
-        return redirect("chatbot:index")
-
+        return redirect('chatbot:index')
+    
     elif request.method == "POST":
-        # Handle POST: process chat message
+        # Handle POST: process chat message (async)
         try:
-            return async_to_sync(chat_endpoint)(request)
+            # Suppress the async_to_sync warning if chat_endpoint is actually async
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning)
+                return async_to_sync(chat_endpoint)(request)
         except Exception as e:
             logger.error(f"Chat endpoint error: {e}", exc_info=True)
-            return JsonResponse({"error": str(e), "message": "Chat endpoint error"}, status=500)
-
+            return JsonResponse({
+                'error': str(e),
+                'message': 'Chat endpoint error'
+            }, status=500)
+    
+    elif request.method == "OPTIONS":
+        return JsonResponse({"status": "ok"})
+    
     else:
         # Other methods not allowed
-        return JsonResponse({"error": "Method not allowed", "message": "Only GET and POST are supported"}, status=405)
+        return JsonResponse({
+            'error': 'Method not allowed',
+            'message': 'Only GET and POST are supported'
+        }, status=405)
 
 
 # Alias for backward compatibility
 @csrf_exempt
 @require_http_methods(["POST"])
 def chat_endpoint_sync(request):
-    """
-    Sync wrapper for async chat endpoint.
-    Needed because Django views are sync by default.
-    Only accepts POST requests with message payload.
-    """
+   
     try:
-        return async_to_sync(chat_endpoint)(request)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
+            return async_to_sync(chat_endpoint)(request)
     except Exception as e:
         logger.error(f"Chat endpoint error: {e}", exc_info=True)
-        return JsonResponse({"error": str(e), "message": "Chat endpoint error"}, status=500)
+        return JsonResponse({
+            'error': str(e),
+            'message': 'Chat endpoint error'
+        }, status=500)
 
 
-# ----------------------------
-# Booking Confirmation
-# ----------------------------
-
-
+# Booking confirmation (async)
 @csrf_exempt
-@require_http_methods(["POST"])
-def confirm_booking_sync(request):
-    """
-    Sync wrapper for async booking confirmation endpoint.
-    Only accepts POST requests.
-    """
+@require_http_methods(["POST", "OPTIONS"])
+def confirm_booking_view(request):
+    """Async booking confirmation handler"""
+    if request.method == "OPTIONS":
+        return JsonResponse({"status": "ok"})
+    
     try:
-        return async_to_sync(confirm_booking)(request)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
+            return async_to_sync(confirm_booking)(request)
     except Exception as e:
         logger.error(f"Booking confirmation error: {e}", exc_info=True)
-        return JsonResponse({"error": str(e), "message": "Booking confirmation error"}, status=500)
+        return JsonResponse({
+            'error': str(e),
+            'message': 'Booking confirmation error'
+        }, status=500)
+
+
+# Update booking preview details (async)
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def update_booking_preview_view(request):
+    """Async update booking preview details handler"""
+    if request.method == "OPTIONS":
+        return JsonResponse({"status": "ok"})
+    
+    try:
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
+            return async_to_sync(update_booking_preview)(request)
+    except Exception as e:
+        logger.error(f"Update booking preview error: {e}", exc_info=True)
+        return JsonResponse({
+            'error': str(e),
+            'message': 'Update booking preview error'
+        }, status=500)

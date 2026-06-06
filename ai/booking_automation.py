@@ -1,17 +1,12 @@
 import logging
-from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
-
+from datetime import datetime, timedelta, time as dt_time
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
 
 class BookingAutomation:
-    """
-    Booking engine for AI chatbot (room recommendation + auto booking)
-    """
-
     def __init__(self, room_model, booking_model, booking_rule_model=None):
         self.Room = room_model
         self.Booking = booking_model
@@ -26,7 +21,10 @@ class BookingAutomation:
             missing = [f for f in required if not criteria.get(f)]
 
             if missing:
-                return {"valid": False, "message": f"Missing fields: {', '.join(missing)}"}
+                return {
+                    "valid": False,
+                    "message": f"Missing fields: {', '.join(missing)}"
+                }
 
             datetime.strptime(criteria["date"], "%Y-%m-%d")
             datetime.strptime(criteria["start_time"], "%H:%M")
@@ -35,12 +33,15 @@ class BookingAutomation:
             return {"valid": True}
 
         except Exception as e:
-            return {"valid": False, "message": f"Invalid input: {e!s}"}
+            return {"valid": False, "message": f"Invalid input: {str(e)}"}
 
     # =========================================================
     # FIND ROOMS
+    # NOTE: date/start_time/end_time are OPTIONAL — if absent, all
+    # is_available=True rooms matching capacity are returned (browse mode).
+    # validate_booking() is only called inside auto_book(), NOT here.
     # =========================================================
-    def find_best_rooms(self, criteria: dict, limit: int = 5) -> List[Dict]:
+    def find_best_rooms(self, criteria: dict, limit: int = None, return_all: bool = False) -> List[Dict]:
 
         rooms = self.Room.objects.filter(is_available=True)
 
@@ -48,116 +49,58 @@ class BookingAutomation:
         if isinstance(capacity, str):
             try:
                 capacity = int(capacity)
-            except:
+            except Exception:
                 capacity = 1
 
         room_number = criteria.get("room_number")
-
         if room_number:
-            rooms = rooms.filter(room_number__iexact=room_number)
+            from django.db.models import Q
+            rooms = rooms.filter(Q(room_number__iexact=room_number) | Q(name__iexact=room_number))
 
-        if capacity:
+        # Filter by capacity only if meaningful
+        if capacity and capacity > 0:
             rooms = rooms.filter(capacity__gte=capacity)
-
-        available_rooms = []
-
-        for room in rooms[:20]:
-            score, availability = self._score_room(room, criteria)
-
-            if availability["is_available"]:
-                available_rooms.append(
-                    {
-                        "room": room,
-                        "score": score,
-                        "capacity": room.capacity,
-                        "name": room.name,
-                        "room_number": room.room_number,
-                        "building": getattr(room, "building_name", None) or getattr(room, "building", None),
-                        "availability": availability,
-                        "features": self._get_room_features(room),
-                    }
-                )
-
-        available_rooms.sort(key=lambda x: x["score"], reverse=True)
-        return available_rooms[:limit]
-
-    # =========================================================
-    # ROOM SCORING
-    # =========================================================
-    def _score_room(self, room, criteria: dict) -> Tuple[float, Dict]:
-
-        score = 0.0
-        availability = {"is_available": True, "conflicts": []}
 
         date = criteria.get("date")
         start_time = criteria.get("start_time")
         end_time = criteria.get("end_time")
+        has_time_filter = bool(date and start_time and end_time)
 
-        capacity = criteria.get("capacity", 1)
-        if isinstance(capacity, str):
-            try:
-                capacity = int(capacity)
-            except:
-                capacity = 1
+        if not has_time_filter:
+            logger.info("find_best_rooms: no time filter — returning all available rooms (browse mode)")
 
-        # conflict check
-        if date and start_time and end_time:
-            conflicts = self._check_conflicts(room, date, start_time, end_time)
+        available_rooms = []
+        for room in rooms:
+            is_available = True
 
-            if conflicts:
-                availability["is_available"] = False
-                availability["conflicts"] = conflicts
-                return 0.0, availability
+            if has_time_filter:
+                conflicts = self._check_conflicts(room, date, start_time, end_time)
+                if conflicts:
+                    is_available = False
 
-            score += 50
+            if is_available:
+                available_rooms.append({
+                    "room": room,
+                    "capacity": room.capacity,
+                    "name": room.name,
+                    "room_number": room.room_number,
+                    "room_type": room.room_type,
+                    "availability": {"is_available": True, "conflicts": []},
+                    "equipment": self._get_room_equipment(room),
+                    "has_time_filter": has_time_filter,
+                })
 
-        # capacity score
-        if room.capacity >= capacity:
-            excess = room.capacity - capacity
+        # Sort by capacity (smallest suitable room first)
+        available_rooms.sort(key=lambda x: x["capacity"])
 
-            if excess == 0:
-                score += 30
-            elif excess <= 5:
-                score += 25
-            elif excess <= 10:
-                score += 20
-            else:
-                score += max(0, 15 - min(excess * 0.5, 10))
+        logger.info(f"find_best_rooms: found {len(available_rooms)} rooms")
+
+        if return_all:
+            return available_rooms
+        elif limit:
+            return available_rooms[:limit]
         else:
-            availability["is_available"] = False
-            return 0.0, availability
-
-        # building match
-        if criteria.get("building"):
-            room_building = getattr(room, "building_name", None) or getattr(room, "building", None)
-
-            if room_building and room_building.upper() == criteria["building"].upper():
-                score += 20
-
-        # purpose match
-        if criteria.get("purpose"):
-            type_mapping = {
-                "meeting": "meeting",
-                "lecture": "lecture",
-                "conference": "conference",
-                "workshop": "workshop",
-                "lab": "lab",
-            }
-
-            preferred = type_mapping.get(criteria["purpose"])
-
-            if preferred and room.room_type == preferred:
-                score += 15
-
-        # features
-        if getattr(room, "has_projector", False):
-            score += 5
-        if getattr(room, "has_whiteboard", False):
-            score += 3
-        if getattr(room, "has_computer", False):
-            score += 4
-
-        return score, availability
+            return available_rooms
 
     # =========================================================
     # CONFLICT CHECK
@@ -169,22 +112,27 @@ class BookingAutomation:
         except:
             return []
 
-        bookings = self.Booking.objects.filter(room=room, start_time__date=date_obj, status__in=["confirmed"])
+        bookings = self.Booking.objects.filter(
+            room=room,
+            start_time__date=date_obj,
+            status__in=["confirmed"]
+        )
 
         conflicts = []
 
         for booking in bookings:
             if self._times_overlap(
-                start_time, end_time, booking.start_time.strftime("%H:%M"), booking.end_time.strftime("%H:%M")
+                start_time,
+                end_time,
+                booking.start_time.strftime("%H:%M"),
+                booking.end_time.strftime("%H:%M")
             ):
-                conflicts.append(
-                    {
-                        "booking_id": booking.id,
-                        "start": booking.start_time.strftime("%H:%M"),
-                        "end": booking.end_time.strftime("%H:%M"),
-                        "user": str(booking.user),
-                    }
-                )
+                conflicts.append({
+                    "booking_id": booking.id,
+                    "start": booking.start_time.strftime("%H:%M"),
+                    "end": booking.end_time.strftime("%H:%M"),
+                    "user": str(booking.user),
+                })
 
         return conflicts
 
@@ -204,85 +152,131 @@ class BookingAutomation:
             return False
 
     # =========================================================
-    # FEATURES
+    # EQUIPMENT PARSING
     # =========================================================
-    def _get_room_features(self, room) -> List[str]:
+    def _parse_equipment(self, equipment_text: str) -> List[str]:
+        if not equipment_text:
+            return []
+        
+        # Split by comma or common separators
+        items = [item.strip() for item in equipment_text.replace(',', ' ').split()]
+        return [item for item in items if item]
 
-        features = []
-
-        mapping = [
-            ("has_projector", "Projector"),
-            ("has_whiteboard", "Whiteboard"),
-            ("has_computer", "Computer"),
-            ("has_audio", "Audio System"),
-            ("has_video", "Video Conferencing"),
-            ("has_ac", "Air Conditioning"),
-        ]
-
-        for attr, label in mapping:
-            if getattr(room, attr, False):
-                features.append(label)
-
-        return features
+    def _get_room_equipment(self, room) -> List[str]:
+        return self._parse_equipment(room.equipment)
 
     # =========================================================
     # AUTO BOOKING
     # =========================================================
     def auto_book(self, user, criteria: dict) -> Dict:
 
-        # IMPORTANT FIX: validation first
+        # STEP 1: VALIDATE BOOKING CRITERIA
         validation = self.validate_booking(criteria)
         if not validation["valid"]:
-            return {"success": False, "error": validation["message"]}
+            return {
+                "success": False,
+                "error": validation["message"],
+                "user_message": f" Booking validation failed: {validation['message']}"
+            }
 
+        # STEP 2: FIND BEST ROOMS
         best_rooms = self.find_best_rooms(criteria, limit=1)
 
         if not best_rooms:
             return {
                 "success": False,
                 "error": "No available rooms",
+                "user_message": " No available rooms found for your criteria. Try a different time or capacity."
             }
 
         best = best_rooms[0]
         room = best["room"]
 
+        # STEP 3: VALIDATE USER
+        if not user or not hasattr(user, 'id'):
+            return {
+                "success": False,
+                "error": "Invalid user",
+                "user_message": "❌ User authentication failed. Please log in."
+            }
+
+        # STEP 4: PARSE DATE/TIME
         try:
             date_obj = datetime.strptime(criteria["date"], "%Y-%m-%d").date()
-
             start_time = datetime.strptime(criteria["start_time"], "%H:%M")
             end_time = datetime.strptime(criteria["end_time"], "%H:%M")
 
             start_dt = timezone.make_aware(datetime.combine(date_obj, start_time.time()))
             end_dt = timezone.make_aware(datetime.combine(date_obj, end_time.time()))
 
+            # Handle same-day bookings that cross midnight
             if end_dt <= start_dt:
                 end_dt += timedelta(days=1)
 
-        except Exception:
-            return {"success": False, "error": "Invalid date/time format"}
+        except Exception as e:
+            logger.error(f"Date/time parsing failed: {e}")
+            return {
+                "success": False,
+                "error": "Invalid date/time format",
+                "user_message": f"❌ Invalid date or time format: {str(e)}"
+            }
 
-        # conflict check
-        conflicts = self._check_conflicts(room, criteria["date"], criteria["start_time"], criteria["end_time"])
-
-        if conflicts:
-            return {"success": False, "error": "Room not available", "conflicts": conflicts}
-
-        booking = self.Booking.objects.create(
-            user=user,
-            room=room,
-            start_time=start_dt,
-            end_time=end_dt,
-            purpose=criteria.get("purpose", "meeting"),
-            attendees=criteria.get("capacity", 1),
-            additional_notes=criteria.get("raw_message", ""),
+        # STEP 5: FINAL CONFLICT CHECK (before creation)
+        conflicts = self._check_conflicts(
+            room,
+            criteria["date"],
+            criteria["start_time"],
+            criteria["end_time"]
         )
 
-        return {
-            "success": True,
-            "booking": booking,
-            "room": best,
-            "message": f"Booking confirmed: {room.name} ({room.room_number})",
-        }
+        if conflicts:
+            return {
+                "success": False,
+                "error": "Room not available - conflicts detected",
+                "conflicts": conflicts,
+                "user_message": f" Room {room.name} is not available at that time due to existing bookings."
+            }
+
+        # STEP 6: CREATE BOOKING
+        try:
+            booking = self.Booking.objects.create(
+                user=user,
+                room=room,
+                start_time=start_dt,
+                end_time=end_dt,
+                purpose=criteria.get("purpose", "meeting"),
+                attendees=criteria.get("capacity", 1),
+                additional_notes=criteria.get("raw_message", ""),
+                agreed_to_room_policy=True
+            )
+
+            return {
+                "success": True,
+                "booking": booking,
+                "booking_id": booking.id,
+                "room": best,
+                "room_name": room.name,
+                "room_number": room.room_number,
+                "date": criteria["date"],
+                "time": f"{criteria['start_time']} - {criteria['end_time']}",
+                "user_message": f"Booking confirmed: {room.name} ({room.room_number}) on {criteria['date']} from {criteria['start_time']} to {criteria['end_time']}"
+            }
+        except Exception as e:
+            logger.exception(f"Booking creation failed: {e}")
+            user_msg = " Failed to create booking. Please try again."
+            if hasattr(e, 'message_dict'):
+                # Extract first error message from dict
+                first_key = list(e.message_dict.keys())[0]
+                first_err = e.message_dict[first_key][0]
+                user_msg = f"{first_err}"
+            elif hasattr(e, 'messages'):
+                user_msg = f" {e.messages[0]}"
+                
+            return {
+                "success": False,
+                "error": f"Booking creation failed: {str(e)}",
+                "user_message": user_msg
+            }
 
     # =========================================================
     # SUGGESTIONS
