@@ -6,9 +6,22 @@ from chromadb.config import Settings
 
 logger = logging.getLogger(__name__)
 
+# Check if chromadb is installed
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    CHROMADB_AVAILABLE = False
+
 
 class VectorStore:
     def __init__(self, persist_directory: Optional[str] = None):
+
+        if not CHROMADB_AVAILABLE:
+            raise RuntimeError(
+                "chromadb is not installed. Install 'chromadb' to enable the vector store "
+                "or avoid constructing VectorStore when AI features are disabled."
+            )
 
         self.persist_directory = persist_directory or os.getenv(
             "VECTOR_DB_PATH",
@@ -80,6 +93,8 @@ class VectorStore:
         n_results: int = 5,
         where: Optional[Dict] = None,
     ) -> Dict:
+        if self.client is None:
+            return {"documents": [[]], "metadatas": [[]], "distances": [[]]}
 
         collection = self.client.get_collection(collection_name)
 
@@ -130,6 +145,8 @@ class VectorStore:
     # STATS / MONITORING
     # =========================
     def get_collection_stats(self) -> Dict[str, int]:
+        if self.client is None:
+            return {"knowledge_base": 0, "rooms_info": 0, "booking_policies": 0}
         return {
             "knowledge_base": self.knowledge_collection.count(),
             "rooms_info": self.rooms_collection.count(),

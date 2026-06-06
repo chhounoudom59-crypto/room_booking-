@@ -27,10 +27,18 @@ try:
 except (ImportError, ModuleNotFoundError):
     pass
 
+from django.urls import re_path
+from django.views.static import serve
+
 # Serve static and media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # Serve media files through Django in production (since there is no Nginx in Docker)
+    urlpatterns += [
+        re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    ]
 
 urlpatterns += [
     path("accounts/", include("allauth.urls")),

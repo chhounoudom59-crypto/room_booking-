@@ -56,9 +56,16 @@
                                 <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                             </select>
                         </div>
-                        <div class="col-md-3 col-12 d-flex gap-2 align-items-end">
-                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>Filter</button>
-                            <a href="{% url 'accounts:all_bookings' %}" class="btn btn-outline-secondary w-100"><i class="fas fa-times me-1"></i>Clear</a>
+                        <div class="col-md-3 col-12">
+                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-grow-1 shadow-sm">
+                                    <i class="fas fa-filter me-1"></i> Filter
+                                </button>
+                                <a href="{% url 'accounts:all_bookings' %}" class="btn btn-secondary flex-grow-1 shadow-sm">
+                                    <i class="fas fa-times me-1"></i> Clear
+                                </a>
+                            </div>
                         </div>
                         {# Export button removed from filter area #}
                     </form>

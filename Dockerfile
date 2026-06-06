@@ -35,8 +35,8 @@ COPY . /app/
 # Create necessary directories
 RUN mkdir -p /app/staticfiles /app/media
 
-# Make entrypoint executable
-RUN chmod +x /app/entrypoint.sh
+# Fix Windows line endings and make entrypoint executable
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Expose port
 EXPOSE 8000
