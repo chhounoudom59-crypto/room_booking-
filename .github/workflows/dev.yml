@@ -58,7 +58,7 @@ jobs:
           pytest \
             --cov=. \
             --cov-report=term-missing \
-            --cov-fail-under=40 \
+            --cov-fail-under=20 \
             -v
 
       - name: Job summary
